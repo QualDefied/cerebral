@@ -142,6 +142,9 @@ dump.rdb
 *.code-workspace
 .history/
 
+# Claude AI
+.claude/
+
 # IntelliJ IDEA
 .idea/
 *.iws
