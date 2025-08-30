@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts      Account[]
+  transactions  Transaction[]
+  budgets       Budget[]
+  debts         Debt[]
+  creditCards   CreditCard[]
+  cryptoAssets  CryptoAsset[]
+  sharedAccess  SharedAccess[]
+  
+  @@map("users")
+}
+
+model SharedAccess {
+  id       String @id @default(cuid())
+  userId   String
+  partnerId String
+  accessLevel String // "view" | "edit" | "admin"
+  createdAt DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, partnerId])
+  @@map("shared_access")
+}
+
+model Account {
+  id           String      @id @default(cuid())
+  userId       String
+  name         String
+  type         String      // "CHECKING" | "SAVINGS" | "CREDIT_CARD" | "INVESTMENT" | "LOAN"
+  balance      Decimal     @default(0)
+  currency     String      @default("USD")
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  
+  @@map("accounts")
+}
+
+model Transaction {
+  id          String            @id @default(cuid())
+  userId      String
+  accountId   String
+  amount      Decimal
+  description String
+  category    String            // "FOOD_DINING" | "TRANSPORTATION" | etc.
+  type        String            // "INCOME" | "EXPENSE" | "TRANSFER"
+  date        DateTime
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  @@map("transactions")
+}
+
+model Budget {
+  id         String   @id @default(cuid())
+  userId     String
+  category   String   // "FOOD_DINING" | "TRANSPORTATION" | etc.
+  amount     Decimal
+  period     String   // "monthly" | "weekly" | "yearly"
+  startDate  DateTime
+  endDate    DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("budgets")
+}
+
+model Debt {
+  id            String   @id @default(cuid())
+  userId        String
+  name          String
+  balance       Decimal
+  interestRate  Decimal
+  minimumPayment Decimal
+  dueDate       DateTime?
+  type          String   // "credit_card" | "loan" | "mortgage" | "other"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("debts")
+}
+
+model CreditCard {
+  id            String   @id @default(cuid())
+  userId        String
+  name          String
+  lastFourDigits String
+  creditLimit   Decimal
+  currentBalance Decimal  @default(0)
+  apr           Decimal
+  rewardsProgram String?
+  pointsBalance  Int      @default(0)
+  cashbackRate   Decimal? @default(0)
+  annualFee      Decimal  @default(0)
+  minimumPaymentPercentage Decimal @default(0.02)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("credit_cards")
+}
+
+model CryptoAsset {
+  id            String   @id @default(cuid())
+  userId        String
+  symbol        String   // BTC, ETH, ADA, etc.
+  quantity      Decimal  @default(0)
+  averageCost   Decimal  @default(0) // Average cost per unit in USD
+  currentPrice  Decimal  @default(0) // Current market price in USD
+  platform      String?  // Coinbase, Binance, Hardware Wallet, etc.
+  walletAddress String?  // Optional wallet address
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("crypto_assets")
+}
+
