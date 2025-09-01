@@ -1279,12 +1279,14 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
         </div>
       )}
 
-      <div className="max-w-4xl">
-        <div className={`p-6 rounded-lg shadow border transition-colors duration-200 ${
-          isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-        }`}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Credit Cards</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left Column - Credit Cards */}
+        <div className="space-y-8">
+          <div className={`p-6 rounded-lg shadow border transition-colors duration-200 ${
+            isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          }`}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Credit Cards</h2>
             <button
               onClick={() => setShowCreditCardForm(true)}
               className="flex items-center px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
@@ -1564,14 +1566,15 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
             )}
           </div>
         </div>
-      </div>
+        </div>
 
-      <div className="max-w-4xl">
-        <div className={`p-6 rounded-lg shadow border transition-colors duration-200 ${
-          isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-        }`}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Loans</h2>
+        {/* Right Column - Loans and Crypto */}
+        <div className="space-y-8">
+          <div className={`p-6 rounded-lg shadow border transition-colors duration-200 ${
+            isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          }`}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Loans</h2>
             <button
               onClick={() => setShowLoanForm(true)}
               className="flex items-center px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
@@ -1821,15 +1824,13 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
               ))
             )}
           </div>
-        </div>
-      </div>
+          </div>
 
-      <div className="max-w-4xl">
-        <div className={`p-6 rounded-lg shadow border transition-colors duration-200 ${
-          isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-        }`}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Crypto Assets</h2>
+          <div className={`p-6 rounded-lg shadow border transition-colors duration-200 ${
+            isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          }`}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Crypto Assets</h2>
             <button
               onClick={() => setShowCryptoForm(true)}
               className="flex items-center px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
@@ -2091,6 +2092,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                 </div>
               ))
             )}
+          </div>
           </div>
         </div>
       </div>
