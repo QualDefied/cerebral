@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { authenticateToken } from '../middleware/auth.js';
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from '../controllers/transactionController.js';
 
 export const transactionRoutes = Router();

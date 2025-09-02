@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, CreditCard, TrendingUp, TrendingDown, Plus, X, Trash2, Edit, Target, Moon, Sun, Wallet, Star, Home, Bitcoin } from 'lucide-react';
+import { DollarSign, CreditCard, TrendingUp, TrendingDown, Plus, X, Edit, Target, Moon, Sun, Wallet, Star, Home, Bitcoin, Search, Bell, Settings } from 'lucide-react';
+import { ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, Tooltip } from 'recharts';
 
 interface CreditCard {
   id: string;
@@ -312,17 +313,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
   useEffect(() => {
     const fetchCreditCards = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const headers: any = {
-          'Content-Type': 'application/json'
-        };
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        const response = await fetch('http://127.0.0.1:9002/api/credit-cards', {
-          headers
-        });
+        const response = await fetch('http://127.0.0.1:9002/api/credit-cards');
         if (response.ok) {
           const data = await response.json();
           setCreditCards(data);
@@ -331,7 +322,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
         console.error('Error fetching credit cards:', error);
       }
     };
-    
+
     fetchCreditCards();
     fetchCryptoAssets();
   }, []);
@@ -376,17 +367,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
   // Fetch crypto assets from API
   const fetchCryptoAssets = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const headers: any = {
-        'Content-Type': 'application/json'
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const response = await fetch('http://127.0.0.1:9002/api/crypto-assets', {
-        headers
-      });
+      const response = await fetch('http://127.0.0.1:9002/api/crypto-assets');
       if (response.ok) {
         const data = await response.json();
         setCryptoAssets(data);
@@ -428,6 +409,9 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
 
   const [creditScore, setCreditScore] = useState(0);
 
+  // UI: header actions
+  const [showSettings, setShowSettings] = useState(false);
+
   // Credit score ranges based on FICO scores
   const getCreditScoreRange = (score: number) => {
     if (score >= 800) return { range: 'Exceptional', color: '#10B981', percentage: 20 };
@@ -439,6 +423,15 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
   };
 
   const creditScoreData = getCreditScoreRange(creditScore);
+
+  // Generate a simple trend for balance sparkline (last 6 points)
+  const generateBalanceTrend = () => {
+    const base = Math.max(0, balances.totalBalance);
+    const points = [0.82, 0.88, 0.94, 0.9, 0.96, 1.0];
+    return points.map((p, i) => ({ idx: i, value: Math.round(base * p) }));
+  };
+
+  const balanceTrend = generateBalanceTrend();
 
   // Simple pie chart component
   const CreditScorePieChart = ({ score, data }: { score: number; data: any }) => {
@@ -522,7 +515,6 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
     
     if (newCard.name && newCard.creditLimit && newCard.apr && newCard.dueDate && newCard.debt !== '') {
       try {
-        const token = localStorage.getItem('token');
         const cardData = {
           name: newCard.name,
           creditLimit: parseFloat(newCard.creditLimit),
@@ -533,19 +525,14 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
           bank: newCard.bank,
           lastFourDigits: '0000' // Default for demo
         };
-        
+
         console.log('Sending card data to API:', cardData);
-        
-        const headers: any = {
-          'Content-Type': 'application/json'
-        };
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        
+
         const response = await fetch('http://127.0.0.1:9002/api/credit-cards', {
           method: 'POST',
-          headers,
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify(cardData)
         });
         
@@ -595,7 +582,6 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
     
     if (newCard.name && newCard.creditLimit && newCard.apr && newCard.dueDate && newCard.debt !== '') {
       try {
-        const token = localStorage.getItem('token');
         const cardData = {
           name: newCard.name,
           creditLimit: parseFloat(newCard.creditLimit),
@@ -605,19 +591,14 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
           rewardType: newCard.rewardType,
           bank: newCard.bank
         };
-        
+
         console.log('Updating card data via API:', cardData);
-        
-        const headers: any = {
-          'Content-Type': 'application/json'
-        };
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        
+
         const response = await fetch(`http://127.0.0.1:9002/api/credit-cards/${editingCard?.id}`, {
           method: 'PUT',
-          headers,
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify(cardData)
         });
         
@@ -655,15 +636,8 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
   const handleDeleteCreditCard = async (cardId: string) => {
     if (window.confirm('Are you sure you want to delete this credit card?')) {
       try {
-        const token = localStorage.getItem('token');
-        const headers: any = {};
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        
         const response = await fetch(`http://127.0.0.1:9002/api/credit-cards/${cardId}`, {
-          method: 'DELETE',
-          headers
+          method: 'DELETE'
         });
         
         if (response.ok) {
@@ -751,7 +725,6 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
     
     if (newCrypto.symbol) {
       try {
-        const token = localStorage.getItem('token');
         const cryptoData = {
           symbol: newCrypto.symbol.toUpperCase(),
           quantity: parseFloat(newCrypto.quantity) || 0,
@@ -760,19 +733,14 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
           platform: newCrypto.platform,
           walletAddress: newCrypto.walletAddress
         };
-        
+
         console.log('Sending crypto data to API:', cryptoData);
-        
-        const headers: any = {
-          'Content-Type': 'application/json'
-        };
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        
+
         const response = await fetch('http://127.0.0.1:9002/api/crypto-assets', {
           method: 'POST',
-          headers,
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify(cryptoData)
         });
         
@@ -814,7 +782,6 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
     
     if (newCrypto.symbol) {
       try {
-        const token = localStorage.getItem('token');
         const cryptoData = {
           symbol: newCrypto.symbol.toUpperCase(),
           quantity: parseFloat(newCrypto.quantity) || 0,
@@ -823,17 +790,12 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
           platform: newCrypto.platform,
           walletAddress: newCrypto.walletAddress
         };
-        
-        const headers: any = {
-          'Content-Type': 'application/json'
-        };
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        
+
         const response = await fetch(`http://127.0.0.1:9002/api/crypto-assets/${editingCrypto?.id}`, {
           method: 'PUT',
-          headers,
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify(cryptoData)
         });
         
@@ -861,15 +823,8 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
   const handleDeleteCryptoAsset = async (assetId: string) => {
     if (window.confirm('Are you sure you want to delete this crypto asset?')) {
       try {
-        const token = localStorage.getItem('token');
-        const headers: any = {};
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        
         const response = await fetch(`http://127.0.0.1:9002/api/crypto-assets/${assetId}`, {
-          method: 'DELETE',
-          headers
+          method: 'DELETE'
         });
         
         if (response.ok) {
@@ -932,6 +887,21 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
   }, {} as Record<string, number>);
 
   const totalRewardPoints = creditCards.reduce((total, card) => total + (card.pointsBalance || 0), 0);
+
+  // Credit utilization for donut chart
+  const creditUtilization = totalCreditLimit > 0 ? Math.min(100, Math.max(0, Math.round((totalCreditCardDebt / totalCreditLimit) * 100))) : 0;
+  const utilizationData = [
+    { name: 'Used', value: creditUtilization },
+    { name: 'Available', value: Math.max(0, 100 - creditUtilization) }
+  ];
+
+  // Financial goal progress (parse a target amount from the goal text)
+  const parseGoalTarget = (text: string) => {
+    const match = (text || '').replace(/[,\s]/g, '').match(/\$?(\d+(?:\.\d+)?)/);
+    return match ? parseFloat(match[1]) : 0;
+  };
+  const goalTarget = parseGoalTarget(financialGoal);
+  const goalProgress = goalTarget > 0 ? Math.min(1, balances.totalBalance / goalTarget) : 0;
 
   const stats = [
     {
@@ -1006,6 +976,17 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
     }
   ];
 
+  const overallPositive = (stats: any[]) => {
+    const positiveCount = stats.filter(stat => stat.positive).length;
+    return positiveCount > stats.length / 2;
+  };
+
+  const statSummaryDirectionClass = (stats: any[]) => {
+    return overallPositive(stats)
+      ? (isDarkMode ? 'text-green-400' : 'text-green-600')
+      : (isDarkMode ? 'text-red-400' : 'text-red-600');
+  };
+
   return (
     <div className="relative min-h-screen">
       {/* Theme Toggle Button */}
@@ -1022,113 +1003,91 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
       </button>
 
       <div className="space-y-8 relative">
-      {/* Professional Header */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 bg-clip-text text-transparent mb-3">
-          Financial Dashboard
-        </h1>
-        <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} max-w-2xl mx-auto`}>
-          Take control of your finances with comprehensive insights and intelligent recommendations
-        </p>
-        <div className="mt-6 flex justify-center">
-          <button
-            onClick={handleWipeAllData}
-            className="flex items-center px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-            title="Reset all data"
-          >
-            <Trash2 className="w-5 h-5 mr-2" />
-            Reset Data
+      {/* Header with greeting and actions */}
+      <div className="flex items-center justify-between mb-10">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">Welcome back</h1>
+          <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Here’s an overview of your finances</p>
+        </div>
+        <div className="flex items-center space-x-3 relative">
+          <button className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`} title="Search">
+            <Search className="w-5 h-5" />
           </button>
+          <button className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`} title="Notifications">
+            <Bell className="w-5 h-5" />
+          </button>
+          <div className="relative">
+            <button onClick={() => setShowSettings(v => !v)} className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`} title="Settings">
+              <Settings className="w-5 h-5" />
+            </button>
+            {showSettings && (
+              <div className={`absolute right-0 mt-2 w-48 rounded-lg border shadow-lg z-50 ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
+                <button onClick={handleWipeAllData} className={`w-full text-left px-3 py-2 text-sm rounded-lg ${isDarkMode ? 'text-red-300 hover:bg-gray-800' : 'text-red-600 hover:bg-gray-50'}`}>Reset Data</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-6">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div key={stat.name} className={`group p-6 rounded-xl shadow-lg border relative transition-all duration-300 transform hover:scale-105 hover:shadow-2xl ${
-              isDarkMode
-                ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 hover:border-orange-500/30'
-                : 'bg-gradient-to-br from-white to-orange-50 border-gray-200 hover:border-orange-300'
-            } backdrop-blur-sm`}>
-              {stat.key !== 'creditCardDebt' && stat.key !== 'totalCreditLimit' && stat.key !== 'totalLoanDebt' && stat.key !== 'totalCryptoValue' && stat.key !== 'totalMinimumExpenses' && (
-                <button
-                  onClick={() => handleEditBalance(stat.key)}
-                  className={`absolute top-2 right-2 p-1 rounded transition-colors ${
-                    isDarkMode 
-                      ? 'text-gray-500 hover:text-gray-300' 
-                      : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                  title="Edit amount"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-              )}
-              {(stat.key === 'creditCardDebt' || stat.key === 'totalCreditLimit' || stat.key === 'totalLoanDebt' || stat.key === 'totalCryptoValue' || stat.key === 'totalMinimumExpenses') && (
-                <div className={`absolute top-2 right-2 px-2 py-1 text-xs rounded transition-colors ${
-                  isDarkMode 
-                    ? 'bg-blue-900 text-blue-300' 
-                    : 'bg-blue-100 text-blue-600'
-                }`}>
-                  Auto-calculated
-                </div>
-              )}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className={`p-3 rounded-xl shadow-lg backdrop-blur-sm transition-all duration-300 group-hover:scale-110 ${
-                    isDarkMode
-                      ? 'bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30'
-                      : 'bg-gradient-to-br from-orange-100 to-orange-200 border border-orange-300'
-                  }`}>
-                    <Icon className={`w-7 h-7 ${
-                      isDarkMode ? 'text-orange-400' : 'text-orange-600'
-                    }`} />
-                  </div>
-                </div>
-                <div className={`text-sm font-medium ${
-                  stat.positive ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {stat.positive ? '↗' : '↘'}
-                </div>
-              </div>
-              <div className="mt-4">
-                <h3 className={`text-3xl font-bold bg-gradient-to-r ${
-                  isDarkMode
-                    ? 'from-orange-400 to-orange-300'
-                    : 'from-orange-600 to-orange-500'
-                } bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300`}>
-                  {stat.key === 'creditScore' && creditScore > 0 ? creditScore : stat.value}
-                </h3>
-                <p className={`text-sm mt-1 font-medium ${
-                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>{stat.name}</p>
-                {stat.key === 'creditScore' && creditScore > 0 && (
-                  <div className="mt-2 space-y-1">
-                    <p className={`text-xs font-medium ${
-                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                    }`}>
-                      {creditScoreData.range} • {creditScoreData.percentage}% of population
-                    </p>
-                    <div className="flex items-center">
-                      <div
-                        className="w-2 h-2 rounded-full mr-2"
-                        style={{ backgroundColor: creditScoreData.color }}
-                      ></div>
-                      <span className={`text-xs ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
-                        Range: {creditScoreData.range === 'Exceptional' ? '800-850' :
-                               creditScoreData.range === 'Very Good' ? '740-799' :
-                               creditScoreData.range === 'Good' ? '670-739' :
-                               creditScoreData.range === 'Fair' ? '580-669' : '300-579'}
-                      </span>
+      {/* Single clean panel replacing multiple stat cards */}
+      <div
+        className={`rounded-2xl border shadow-lg p-6 ${
+          isDarkMode
+            ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700'
+            : 'bg-white border-gray-200'
+        }`}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Financial Overview</h2>
+          <span className={`text-xs ${statSummaryDirectionClass(stats)} font-medium`}>
+            {overallPositive(stats) ? 'Overall ↗' : 'Overall ↘'}
+          </span>
+        </div>
+        <ul className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+          {stats.map((stat) => {
+            const Icon = stat.icon;
+            const canEdit = stat.key !== 'creditCardDebt' && stat.key !== 'totalCreditLimit' && stat.key !== 'totalLoanDebt' && stat.key !== 'totalCryptoValue' && stat.key !== 'totalMinimumExpenses';
+            return (
+              <li key={stat.name} className="py-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`p-2 rounded-lg border ${
+                        isDarkMode
+                          ? 'bg-orange-500/10 border-orange-500/30 text-orange-300'
+                          : 'bg-orange-100 border-orange-300 text-orange-600'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5" />
                     </div>
+                    <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm font-medium`}>{stat.name}</span>
                   </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`text-xl font-semibold bg-gradient-to-r ${
+                        isDarkMode ? 'from-orange-400 to-orange-300' : 'from-orange-600 to-orange-500'
+                      } bg-clip-text text-transparent`}
+                    >
+                      {stat.key === 'creditScore' && creditScore > 0 ? creditScore : stat.value}
+                    </span>
+                    <span className={`text-sm ${stat.positive ? 'text-green-600' : 'text-red-600'}`}>
+                      {stat.positive ? '↗' : '↘'}
+                    </span>
+                    {canEdit && (
+                      <button
+                        onClick={() => handleEditBalance(stat.key)}
+                        className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} p-1 rounded`}
+                        title="Edit amount"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
 
       {showBalanceForm && (
@@ -1275,7 +1234,17 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
           isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
         }`}>
           {financialGoal ? (
-            <p className={`whitespace-pre-wrap ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{financialGoal}</p>
+            <>
+              <p className={`whitespace-pre-wrap ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{financialGoal}</p>
+              {goalTarget > 0 && (
+                <div className="mt-4">
+                  <div className={`w-full h-3 rounded-full ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'}`}>
+                    <div className="h-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-600" style={{ width: `${Math.round(goalProgress * 100)}%` }} />
+                  </div>
+                  <div className={`mt-1 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{Math.round(goalProgress * 100)}% towards $ {goalTarget.toLocaleString()}</div>
+                </div>
+              )}
+            </>
           ) : (
             <p className={`italic ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No financial goal set yet. Click "Set Goal" to add one.</p>
           )}
@@ -1416,6 +1385,25 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
               <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 Across {creditCards.filter(card => (card.pointsBalance || 0) > 0).length} credit cards
               </p>
+            </div>
+          </div>
+
+          {/* Credit Utilization */}
+          <div className="mt-6">
+            <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} shadow-sm`}>
+              <h4 className={`text-sm font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Credit Utilization</h4>
+              <div className="h-40">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Tooltip contentStyle={{ background: isDarkMode ? '#111827' : '#ffffff', border: '1px solid #e5e7eb', borderRadius: 8 }} />
+                    <Pie data={utilizationData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={75} paddingAngle={2} startAngle={90} endAngle={450}>
+                      <Cell fill="#f59e0b" />
+                      <Cell fill={isDarkMode ? '#1f2937' : '#e5e7eb'} />
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <p className={`text-center text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{creditUtilization}% used of total credit</p>
             </div>
           </div>
         </div>
@@ -1687,17 +1675,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                       >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => handleDeleteCreditCard(card.id)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          isDarkMode
-                            ? 'text-gray-400 hover:text-orange-400 hover:bg-orange-900/30'
-                            : 'text-gray-500 hover:text-orange-600 hover:bg-orange-50'
-                        }`}
-                        title="Delete credit card"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {/* Delete action removed from surface for cleaner UI */}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-3 border-t border-gray-100">
@@ -2252,17 +2230,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                       >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => handleDeleteCryptoAsset(asset.id)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          isDarkMode
-                            ? 'text-gray-400 hover:text-orange-400 hover:bg-orange-900/30'
-                            : 'text-gray-500 hover:text-orange-600 hover:bg-orange-50'
-                        }`}
-                        title="Delete crypto asset"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {/* Delete action removed from surface for cleaner UI */}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-3 border-t border-gray-100">

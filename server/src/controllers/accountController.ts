@@ -1,12 +1,10 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
-import { AuthRequest } from '../middleware/auth.js';
 import { prisma } from '../utils/database.js';
 
-export const getAccounts = async (req: AuthRequest, res: Response) => {
+export const getAccounts = async (req: Request, res: Response) => {
   try {
     const accounts = await prisma.account.findMany({
-      where: { userId: req.userId },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -16,7 +14,7 @@ export const getAccounts = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const createAccount = async (req: AuthRequest, res: Response) => {
+export const createAccount = async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -27,7 +25,6 @@ export const createAccount = async (req: AuthRequest, res: Response) => {
 
     const account = await prisma.account.create({
       data: {
-        userId: req.userId!,
         name,
         type,
         balance: balance || 0,
@@ -41,16 +38,13 @@ export const createAccount = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const updateAccount = async (req: AuthRequest, res: Response) => {
+export const updateAccount = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, balance, isActive } = req.body;
 
     const account = await prisma.account.update({
-      where: {
-        id,
-        userId: req.userId
-      },
+      where: { id },
       data: { name, balance, isActive }
     });
 
@@ -60,15 +54,12 @@ export const updateAccount = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const deleteAccount = async (req: AuthRequest, res: Response) => {
+export const deleteAccount = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
     await prisma.account.delete({
-      where: {
-        id,
-        userId: req.userId
-      }
+      where: { id }
     });
 
     res.json({ message: 'Account deleted successfully' });

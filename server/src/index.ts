@@ -3,7 +3,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './utils/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import { authRoutes } from './routes/auth.js';
 import { accountRoutes } from './routes/accounts.js';
 import { transactionRoutes } from './routes/transactions.js';
 import { creditCardRoutes } from './routes/creditCards.js';
@@ -23,7 +22,6 @@ app.use(cors({
 app.use(express.json());
 
 // API Routes
-app.use('/api/auth', authRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/credit-cards', creditCardRoutes);
@@ -36,12 +34,11 @@ app.get('/api/health', (_req, res) => {
 
 // Root route
 app.get('/', (_req, res) => {
-  res.json({ 
+  res.json({
     message: 'TeamShell Finance API Server',
     status: 'running',
     endpoints: {
       health: '/api/health',
-      auth: '/api/auth',
       accounts: '/api/accounts',
       transactions: '/api/transactions',
       creditCards: '/api/credit-cards',

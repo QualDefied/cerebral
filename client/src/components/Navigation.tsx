@@ -1,14 +1,10 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  CreditCard, 
-  ArrowUpDown, 
-  PieChart,
-  Target,
+import {
+  LayoutDashboard,
+  Calculator,
   Banknote,
-  Award,
-  Calculator
+  ArrowUpDown
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -21,12 +17,14 @@ export default function Navigation({ isDarkMode }: NavigationProps) {
   const navItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/savings-simulator', icon: Calculator, label: 'Savings Simulator' },
+    { path: '/accounts', icon: Banknote, label: 'Accounts' },
+    { path: '/transactions', icon: ArrowUpDown, label: 'Transactions' },
   ];
 
-  return (
+    return (
     <div className={`fixed left-0 top-0 h-full w-64 shadow-lg border-r transition-colors duration-200 ${
-      isDarkMode 
-        ? 'bg-gray-900/70 backdrop-blur-md border-gray-800' 
+      isDarkMode
+        ? 'bg-gray-900/70 backdrop-blur-md border-gray-800'
         : 'glass-lux border-gray-200'
     }`}>
       <div className="p-6">
@@ -35,17 +33,17 @@ export default function Navigation({ isDarkMode }: NavigationProps) {
         </h1>
         <p className={`text-sm mt-2 ${
           isDarkMode ? 'text-gray-300' : 'text-gray-600'
-        }`}> 
+        }`}>
           Financial Intelligence Platform
         </p>
       </div>
-      
+
       <nav className="px-4">
         <ul className="space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
-            
+
             return (
               <li key={item.path}>
                 <Link
@@ -66,7 +64,6 @@ export default function Navigation({ isDarkMode }: NavigationProps) {
           })}
         </ul>
       </nav>
-
     </div>
   );
 }

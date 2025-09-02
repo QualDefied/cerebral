@@ -6,11 +6,8 @@ const prisma = new PrismaClient();
 
 export const getCreditCards = async (req: Request, res: Response) => {
   try {
-    // Use a default user ID since authentication is bypassed
-    const userId = 'demo-user';
-
     const creditCards = await prisma.creditCard.findMany({
-      where: { userId, isActive: true },
+      where: { isActive: true },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -50,9 +47,6 @@ export const getCreditCards = async (req: Request, res: Response) => {
 
 export const createCreditCard = async (req: Request, res: Response) => {
   try {
-    // Use a default user ID since authentication is bypassed
-    const userId = 'demo-user';
-
     const {
       name,
       lastFourDigits,
@@ -69,14 +63,13 @@ export const createCreditCard = async (req: Request, res: Response) => {
     } = req.body;
 
     if (!name || !lastFourDigits || !creditLimit || apr === undefined) {
-      return res.status(400).json({ 
-        message: 'Missing required fields: name, lastFourDigits, creditLimit, apr' 
+      return res.status(400).json({
+        message: 'Missing required fields: name, lastFourDigits, creditLimit, apr'
       });
     }
 
     const creditCard = await prisma.creditCard.create({
       data: {
-        userId,
         name,
         lastFourDigits,
         creditLimit,
@@ -125,12 +118,10 @@ export const createCreditCard = async (req: Request, res: Response) => {
 
 export const updateCreditCard = async (req: Request, res: Response) => {
   try {
-    // Use a default user ID since authentication is bypassed
-    const userId = 'demo-user';
     const { id } = req.params;
 
     const existingCard = await prisma.creditCard.findFirst({
-      where: { id, userId }
+      where: { id }
     });
 
     if (!existingCard) {
@@ -139,7 +130,6 @@ export const updateCreditCard = async (req: Request, res: Response) => {
 
     const updateData = { ...req.body };
     delete updateData.id;
-    delete updateData.userId;
 
     const creditCard = await prisma.creditCard.update({
       where: { id },
@@ -179,12 +169,10 @@ export const updateCreditCard = async (req: Request, res: Response) => {
 
 export const deleteCreditCard = async (req: Request, res: Response) => {
   try {
-    // Use a default user ID since authentication is bypassed
-    const userId = 'demo-user';
     const { id } = req.params;
 
     const existingCard = await prisma.creditCard.findFirst({
-      where: { id, userId }
+      where: { id }
     });
 
     if (!existingCard) {

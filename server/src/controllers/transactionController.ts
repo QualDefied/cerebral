@@ -1,15 +1,14 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
-import { AuthRequest } from '../middleware/auth.js';
 import { prisma } from '../utils/database.js';
 
-export const getTransactions = async (req: AuthRequest, res: Response) => {
+export const getTransactions = async (req: Request, res: Response) => {
   try {
     const { page = 1, limit = 50, accountId, category, type } = req.query;
-    
+
     const skip = (Number(page) - 1) * Number(limit);
-    
-    const where: any = { userId: req.userId };
+
+    const where: any = {};
     if (accountId) where.accountId = accountId;
     if (category) where.category = category;
     if (type) where.type = type;
@@ -42,7 +41,7 @@ export const getTransactions = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const createTransaction = async (req: AuthRequest, res: Response) => {
+export const createTransaction = async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -52,7 +51,7 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
     const { accountId, amount, description, category, type, date } = req.body;
 
     const account = await prisma.account.findFirst({
-      where: { id: accountId, userId: req.userId }
+      where: { id: accountId }
     });
 
     if (!account) {
@@ -61,7 +60,6 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
 
     const transaction = await prisma.transaction.create({
       data: {
-        userId: req.userId!,
         accountId,
         amount,
         description,
@@ -77,7 +75,7 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
     });
 
     const balanceChange = type === 'INCOME' ? Number(amount) : -Number(amount);
-    
+
     await prisma.account.update({
       where: { id: accountId },
       data: {
@@ -93,16 +91,13 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const updateTransaction = async (req: AuthRequest, res: Response) => {
+export const updateTransaction = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { amount, description, category, date } = req.body;
 
     const transaction = await prisma.transaction.update({
-      where: {
-        id,
-        userId: req.userId
-      },
+      where: { id },
       data: { amount, description, category, date: new Date(date) },
       include: {
         account: {
@@ -117,12 +112,12 @@ export const updateTransaction = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const deleteTransaction = async (req: AuthRequest, res: Response) => {
+export const deleteTransaction = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
     const transaction = await prisma.transaction.findFirst({
-      where: { id, userId: req.userId }
+      where: { id }
     });
 
     if (!transaction) {
@@ -134,7 +129,7 @@ export const deleteTransaction = async (req: AuthRequest, res: Response) => {
     });
 
     const balanceChange = transaction.type === 'INCOME' ? -Number(transaction.amount) : Number(transaction.amount);
-    
+
     await prisma.account.update({
       where: { id: transaction.accountId },
       data: {

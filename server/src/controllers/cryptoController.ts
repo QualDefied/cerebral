@@ -5,11 +5,8 @@ const prisma = new PrismaClient();
 
 export const getCryptoAssets = async (req: Request, res: Response) => {
   try {
-    // Use a default user ID since authentication is bypassed
-    const userId = 'demo-user';
-
     const cryptoAssets = await prisma.cryptoAsset.findMany({
-      where: { userId, isActive: true },
+      where: { isActive: true },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -44,9 +41,6 @@ export const getCryptoAssets = async (req: Request, res: Response) => {
 
 export const createCryptoAsset = async (req: Request, res: Response) => {
   try {
-    // Use a default user ID since authentication is bypassed
-    const userId = 'demo-user';
-
     const {
       symbol,
       quantity = 0,
@@ -57,14 +51,13 @@ export const createCryptoAsset = async (req: Request, res: Response) => {
     } = req.body;
 
     if (!symbol) {
-      return res.status(400).json({ 
-        message: 'Missing required field: symbol' 
+      return res.status(400).json({
+        message: 'Missing required field: symbol'
       });
     }
 
     const cryptoAsset = await prisma.cryptoAsset.create({
       data: {
-        userId,
         symbol: symbol.toUpperCase(),
         quantity,
         averageCost,
@@ -103,12 +96,10 @@ export const createCryptoAsset = async (req: Request, res: Response) => {
 
 export const updateCryptoAsset = async (req: Request, res: Response) => {
   try {
-    // Use a default user ID since authentication is bypassed
-    const userId = 'demo-user';
     const { id } = req.params;
 
     const existingAsset = await prisma.cryptoAsset.findFirst({
-      where: { id, userId }
+      where: { id }
     });
 
     if (!existingAsset) {
@@ -120,7 +111,6 @@ export const updateCryptoAsset = async (req: Request, res: Response) => {
       updateData.symbol = updateData.symbol.toUpperCase();
     }
     delete updateData.id;
-    delete updateData.userId;
 
     const cryptoAsset = await prisma.cryptoAsset.update({
       where: { id },
@@ -156,12 +146,10 @@ export const updateCryptoAsset = async (req: Request, res: Response) => {
 
 export const deleteCryptoAsset = async (req: Request, res: Response) => {
   try {
-    // Use a default user ID since authentication is bypassed
-    const userId = 'demo-user';
     const { id } = req.params;
 
     const existingAsset = await prisma.cryptoAsset.findFirst({
-      where: { id, userId }
+      where: { id }
     });
 
     if (!existingAsset) {
