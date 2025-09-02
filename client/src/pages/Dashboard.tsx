@@ -10,6 +10,9 @@ interface CreditCard {
   apr: number;
   dueDate?: string;
   lastFourDigits?: string;
+  pointsBalance?: number;
+  rewardType?: 'points' | 'miles' | 'cashback' | 'hotel' | 'travel';
+  bank?: string;
   calculatedMinimumPayment?: number;
   interestPortion?: number;
   principalPortion?: number;
@@ -297,7 +300,10 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
     creditLimit: '',
     apr: '',
     dueDate: '',
-    debt: ''
+    debt: '',
+    pointsBalance: '',
+    rewardType: 'points' as 'points' | 'miles' | 'cashback' | 'hotel' | 'travel',
+    bank: ''
   });
   const [cardSuggestions, setCardSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -522,6 +528,9 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
           creditLimit: parseFloat(newCard.creditLimit),
           apr: parseFloat(newCard.apr),
           currentBalance: parseFloat(newCard.debt),
+          pointsBalance: parseInt(newCard.pointsBalance) || 0,
+          rewardType: newCard.rewardType,
+          bank: newCard.bank,
           lastFourDigits: '0000' // Default for demo
         };
         
@@ -546,7 +555,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
           const newCardData = await response.json();
           console.log('New card data received:', newCardData);
           setCreditCards([...creditCards, newCardData]);
-          setNewCard({ name: '', creditLimit: '', apr: '', dueDate: '', debt: '' });
+          setNewCard({ name: '', creditLimit: '', apr: '', dueDate: '', debt: '', pointsBalance: '', rewardType: 'points', bank: '' });
           setShowCreditCardForm(false);
         } else {
           const errorData = await response.text();
@@ -572,7 +581,10 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
       creditLimit: card.creditLimit.toString(),
       apr: card.apr.toString(),
       dueDate: card.dueDate || '',
-      debt: card.currentBalance?.toString() || card.debt?.toString() || '0'
+      debt: card.currentBalance?.toString() || card.debt?.toString() || '0',
+      pointsBalance: card.pointsBalance?.toString() || '0',
+      rewardType: card.rewardType || 'points',
+      bank: card.bank || ''
     });
     setShowCreditCardForm(true);
   };
@@ -588,7 +600,10 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
           name: newCard.name,
           creditLimit: parseFloat(newCard.creditLimit),
           apr: parseFloat(newCard.apr),
-          currentBalance: parseFloat(newCard.debt)
+          currentBalance: parseFloat(newCard.debt),
+          pointsBalance: parseInt(newCard.pointsBalance) || 0,
+          rewardType: newCard.rewardType,
+          bank: newCard.bank
         };
         
         console.log('Updating card data via API:', cardData);
@@ -611,10 +626,10 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
         if (response.ok) {
           const updatedCardData = await response.json();
           console.log('Updated card data received:', updatedCardData);
-          setCreditCards(creditCards.map(card => 
+          setCreditCards(creditCards.map(card =>
             card.id === editingCard?.id ? updatedCardData : card
           ));
-          setNewCard({ name: '', creditLimit: '', apr: '', dueDate: '', debt: '' });
+          setNewCard({ name: '', creditLimit: '', apr: '', dueDate: '', debt: '', pointsBalance: '', rewardType: 'points', bank: '' });
           setEditingCard(null);
           setShowCreditCardForm(false);
         } else {
@@ -631,7 +646,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
 
   const handleCancelEdit = () => {
     setEditingCard(null);
-    setNewCard({ name: '', creditLimit: '', apr: '', dueDate: '', debt: '' });
+    setNewCard({ name: '', creditLimit: '', apr: '', dueDate: '', debt: '', pointsBalance: '', rewardType: 'points', bank: '' });
     setShowCreditCardForm(false);
     setShowSuggestions(false);
     setCardSuggestions([]);
@@ -883,13 +898,40 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
       setShowCryptoForm(false);
       setShowBalanceForm(false);
       setShowGoalForm(false);
-      setNewCard({ name: '', creditLimit: '', apr: '', dueDate: '', debt: '' });
+      setNewCard({ name: '', creditLimit: '', apr: '', dueDate: '', debt: '', pointsBalance: '', rewardType: 'points', bank: '' });
       setNewLoan({ name: '', originalAmount: '', currentBalance: '', interestRate: '', monthlyPayment: '', loanType: '', originationDate: '' });
       setNewCrypto({ symbol: '', quantity: '', averageCost: '', currentPrice: '', platform: '', walletAddress: '' });
       localStorage.clear();
       sessionStorage.clear();
     }
   };
+
+  // Calculate reward points by bank and type
+  const rewardPointsByBank = creditCards.reduce((acc, card) => {
+    const bank = card.bank || 'Unknown';
+    const rewardType = card.rewardType || 'points';
+    const points = card.pointsBalance || 0;
+
+    if (!acc[bank]) {
+      acc[bank] = {};
+    }
+    if (!acc[bank][rewardType]) {
+      acc[bank][rewardType] = 0;
+    }
+    acc[bank][rewardType] += points;
+
+    return acc;
+  }, {} as Record<string, Record<string, number>>);
+
+  // Calculate totals by reward type
+  const totalByType = creditCards.reduce((acc, card) => {
+    const rewardType = card.rewardType || 'points';
+    const points = card.pointsBalance || 0;
+    acc[rewardType] = (acc[rewardType] || 0) + points;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const totalRewardPoints = creditCards.reduce((total, card) => total + (card.pointsBalance || 0), 0);
 
   const stats = [
     {
@@ -949,6 +991,13 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
       positive: true
     },
     {
+      key: 'totalRewardPoints',
+      name: 'Total Reward Points',
+      value: totalRewardPoints === 0 ? 'No Points' : totalRewardPoints.toLocaleString(),
+      icon: Star,
+      positive: totalRewardPoints > 0
+    },
+    {
       key: 'totalMinimumExpenses',
       name: 'Total Minimum Payments',
       value: `$${totalMinimumExpenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
@@ -958,43 +1007,50 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
   ];
 
   return (
-    <div className="relative">
+    <div className="relative min-h-screen">
       {/* Theme Toggle Button */}
       <button
         onClick={toggleTheme}
         className={`fixed bottom-6 right-6 p-3 rounded-full shadow-lg transition-all duration-200 z-40 ${
-          isDarkMode 
-            ? 'bg-yellow-500 hover:bg-yellow-400 text-gray-900' 
-            : 'bg-gray-800 hover:bg-gray-700 text-white'
-        }`}
+          isDarkMode
+            ? 'bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white shadow-orange-500/25'
+            : 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-orange-600/25'
+        } hover:shadow-xl hover:scale-105`}
         title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
       >
         {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
       </button>
 
       <div className="space-y-8 relative">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Dashboard</h1>
-          <p className={`mt-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Overview of your financial health</p>
+      {/* Professional Header */}
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 bg-clip-text text-transparent mb-3">
+          Financial Dashboard
+        </h1>
+        <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} max-w-2xl mx-auto`}>
+          Take control of your finances with comprehensive insights and intelligent recommendations
+        </p>
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={handleWipeAllData}
+            className="flex items-center px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+            title="Reset all data"
+          >
+            <Trash2 className="w-5 h-5 mr-2" />
+            Reset Data
+          </button>
         </div>
-        <button
-          onClick={handleWipeAllData}
-          className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-          title="Wipe all session data"
-        >
-          <Trash2 className="w-4 h-4 mr-2" />
-          Wipe Data
-        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-6">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.name} className={`p-6 rounded-lg shadow border relative transition-colors duration-200 ${
-              isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}>
+            <div key={stat.name} className={`group p-6 rounded-xl shadow-lg border relative transition-all duration-300 transform hover:scale-105 hover:shadow-2xl ${
+              isDarkMode
+                ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 hover:border-orange-500/30'
+                : 'bg-gradient-to-br from-white to-orange-50 border-gray-200 hover:border-orange-300'
+            } backdrop-blur-sm`}>
               {stat.key !== 'creditCardDebt' && stat.key !== 'totalCreditLimit' && stat.key !== 'totalLoanDebt' && stat.key !== 'totalCryptoValue' && stat.key !== 'totalMinimumExpenses' && (
                 <button
                   onClick={() => handleEditBalance(stat.key)}
@@ -1019,8 +1075,14 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
               )}
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="p-2 bg-primary-100 rounded-lg">
-                    <Icon className="w-6 h-6 text-primary-600" />
+                  <div className={`p-3 rounded-xl shadow-lg backdrop-blur-sm transition-all duration-300 group-hover:scale-110 ${
+                    isDarkMode
+                      ? 'bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30'
+                      : 'bg-gradient-to-br from-orange-100 to-orange-200 border border-orange-300'
+                  }`}>
+                    <Icon className={`w-7 h-7 ${
+                      isDarkMode ? 'text-orange-400' : 'text-orange-600'
+                    }`} />
                   </div>
                 </div>
                 <div className={`text-sm font-medium ${
@@ -1030,8 +1092,39 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                 </div>
               </div>
               <div className="mt-4">
-                <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{stat.value}</h3>
-                <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{stat.name}</p>
+                <h3 className={`text-3xl font-bold bg-gradient-to-r ${
+                  isDarkMode
+                    ? 'from-orange-400 to-orange-300'
+                    : 'from-orange-600 to-orange-500'
+                } bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300`}>
+                  {stat.key === 'creditScore' && creditScore > 0 ? creditScore : stat.value}
+                </h3>
+                <p className={`text-sm mt-1 font-medium ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>{stat.name}</p>
+                {stat.key === 'creditScore' && creditScore > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <p className={`text-xs font-medium ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
+                      {creditScoreData.range} • {creditScoreData.percentage}% of population
+                    </p>
+                    <div className="flex items-center">
+                      <div
+                        className="w-2 h-2 rounded-full mr-2"
+                        style={{ backgroundColor: creditScoreData.color }}
+                      ></div>
+                      <span className={`text-xs ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
+                        Range: {creditScoreData.range === 'Exceptional' ? '800-850' :
+                               creditScoreData.range === 'Very Good' ? '740-799' :
+                               creditScoreData.range === 'Good' ? '670-739' :
+                               creditScoreData.range === 'Fair' ? '580-669' : '300-579'}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -1085,14 +1178,14 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                 <button
                   type="button"
                   onClick={() => setShowBalanceForm(false)}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleSaveBalance}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                  className="px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                 >
                   Save
                 </button>
@@ -1143,14 +1236,14 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                 <button
                   type="button"
                   onClick={() => setShowGoalForm(false)}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleSaveGoal}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                  className="px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                 >
                   Save
                 </button>
@@ -1172,7 +1265,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
           </div>
           <button
             onClick={handleEditGoal}
-            className="flex items-center px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="flex items-center px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
           >
             <Edit className="w-4 h-4 mr-2" />
             {financialGoal ? 'Edit Goal' : 'Set Goal'}
@@ -1189,91 +1282,140 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
         </div>
       </div>
 
-      {creditScore > 0 && (
-        <div className={`max-w-3xl p-4 rounded-lg shadow border mb-8 transition-colors duration-200 ${
-          isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-        }`}>
-          <div className="flex items-center justify-between mb-4">
+      {/* Credit Reward Points Summary */}
+      {creditCards.length > 0 && (
+        <div className={`p-6 rounded-xl shadow-lg border transition-all duration-200 hover:shadow-xl ${
+          isDarkMode
+            ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 hover:border-gray-600'
+            : 'bg-white border-gray-200 hover:border-gray-300'
+        } backdrop-blur-sm mb-8`}>
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Star className="w-5 h-5 text-purple-600" />
+              <div className={`p-3 rounded-xl shadow-lg backdrop-blur-sm transition-all duration-300 ${
+                isDarkMode
+                  ? 'bg-gradient-to-br from-gray-700 to-gray-600 border border-gray-600'
+                  : 'bg-gray-100 border border-gray-300'
+              }`}>
+                <Star className={`w-7 h-7 ${
+                  isDarkMode ? 'text-orange-400' : 'text-orange-600'
+                }`} />
               </div>
-              <h2 className={`text-lg font-semibold ml-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Credit Score Analysis</h2>
+              <h2 className={`text-xl font-semibold ml-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Credit Reward Points Summary</h2>
             </div>
           </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="flex flex-col items-center">
-              <div className="relative w-24 h-24 mx-auto">
-                <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    stroke={isDarkMode ? '#374151' : '#E5E7EB'}
-                    strokeWidth="6"
-                    fill="transparent"
-                  />
-                  {creditScore > 0 && (
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      stroke={creditScoreData.color}
-                      strokeWidth="6"
-                      fill="transparent"
-                      strokeDasharray={2 * Math.PI * 40}
-                      strokeDashoffset={2 * Math.PI * 40 - (((creditScore - 300) / (850 - 300)) * 100 / 100) * 2 * Math.PI * 40}
-                      strokeLinecap="round"
-                      className="transition-all duration-500 ease-in-out"
-                    />
-                  )}
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      {creditScore}
-                    </div>
-                    <div className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {creditScoreData.range}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3 text-center">
-                <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {creditScoreData.percentage}% of population
-                </p>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              <h3 className={`text-md font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Score Ranges</h3>
-              {[
-                { range: '800-850', label: 'Exceptional', color: '#10B981', percentage: 20 },
-                { range: '740-799', label: 'Very Good', color: '#059669', percentage: 25 },
-                { range: '670-739', label: 'Good', color: '#FBBF24', percentage: 21 },
-                { range: '580-669', label: 'Fair', color: '#F59E0B', percentage: 17 },
-                { range: '300-579', label: 'Poor', color: '#EF4444', percentage: 17 },
-              ].map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Total Points by Type */}
+            <div className="space-y-4">
+              <h3 className={`text-md font-semibold tracking-wide ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Total by Reward Type</h3>
+              {Object.entries(totalByType).map(([type, total]) => (
+                <div key={type} className="flex items-center justify-between p-4 card-lux">
                   <div className="flex items-center">
-                    <div 
-                      className="w-3 h-3 rounded mr-2" 
-                      style={{ backgroundColor: item.color }}
-                    ></div>
-                    <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      {item.range}
-                    </span>
-                    <span className={`ml-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {item.label}
+                    <div className={`w-4 h-4 rounded-full mr-3 ${
+                      type === 'points' ? 'bg-gradient-to-r from-blue-500 to-blue-600' :
+                      type === 'miles' ? 'bg-gradient-to-r from-green-500 to-emerald-600' :
+                      type === 'cashback' ? 'bg-gradient-to-r from-amber-500 to-orange-600' :
+                      type === 'hotel' ? 'bg-gradient-to-r from-purple-500 to-indigo-600' :
+                      'bg-gradient-to-r from-pink-500 to-rose-600'
+                    } shadow-sm`}></div>
+                    <span className={`text-sm font-semibold capitalize ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {type}
                     </span>
                   </div>
-                  <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                    {item.percentage}%
-                  </span>
+                  <div className="flex items-center">
+                    <span className={`text-lg font-semibold numeric-lux ${
+                      type === 'points' ? 'text-blue-600' :
+                      type === 'miles' ? 'text-green-600' :
+                      type === 'cashback' ? 'text-amber-600' :
+                      type === 'hotel' ? 'text-purple-600' : 'text-pink-600'
+                    }`}>
+                      {total.toLocaleString()}
+                    </span>
+                    <span className={`ml-2 text-xs ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      pts
+                    </span>
+                  </div>
                 </div>
               ))}
+              {Object.keys(totalByType).length === 0 && (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-white dark:from-gray-600 dark:to-gray-500 rounded-full flex items-center justify-center border border-gray-200 dark:border-gray-500">
+                    <Star className={`w-8 h-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  </div>
+                  <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-1`}>
+                    No reward points yet
+                  </p>
+                  <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                    Add points to your credit cards to see them here
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Points by Bank */}
+            <div className="space-y-4">
+              <h3 className={`text-md font-semibold tracking-wide ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Points by Bank</h3>
+              {Object.entries(rewardPointsByBank).map(([bank, types]) => (
+                <div key={bank} className="p-4 card-lux">
+                  <div className={`font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'} flex items-center`}>
+                    <div className="w-2 h-2 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 mr-2"></div>
+                    {bank}
+                  </div>
+                  <div className="space-y-2">
+                    {Object.entries(types).map(([type, points]) => (
+                      <div key={type} className="flex items-center justify-between text-sm bg-white rounded-lg p-2 border border-gray-200 transition-colors duration-200 hover:bg-amber-50/40">
+                        <span className={`capitalize font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                          {type}
+                        </span>
+                        <span className={`font-semibold numeric-lux ${
+                          type === 'points' ? 'text-blue-600' :
+                          type === 'miles' ? 'text-green-600' :
+                          type === 'cashback' ? 'text-amber-600' :
+                          type === 'hotel' ? 'text-purple-600' : 'text-pink-600'
+                        }`}>
+                          {points.toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {Object.keys(rewardPointsByBank).length === 0 && (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-white dark:from-gray-600 dark:to-gray-500 rounded-full flex items-center justify-center border border-gray-200 dark:border-gray-500">
+                    <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-orange-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">🏦</span>
+                    </div>
+                  </div>
+                  <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                    No bank data available
+                  </p>
+                  <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Add bank information to your credit cards
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Overall Total */}
+          <div className="mt-8 pt-6 border-t-2 border-gradient-to-r from-orange-300 to-orange-600">
+            <div className="text-center bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
+              <div className={`text-4xl font-extrabold numeric-lux bg-gradient-to-r ${
+                isDarkMode
+                  ? 'from-orange-300 to-orange-400'
+                  : 'from-orange-600 to-orange-500'
+              } bg-clip-text text-transparent mb-2`}>
+                {totalRewardPoints.toLocaleString()}
+              </div>
+              <p className={`text-sm font-medium tracking-wide ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
+                Total Reward Points
+              </p>
+              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Across {creditCards.filter(card => (card.pointsBalance || 0) > 0).length} credit cards
+              </p>
             </div>
           </div>
         </div>
@@ -1289,7 +1431,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
               <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Credit Cards</h2>
             <button
               onClick={() => setShowCreditCardForm(true)}
-              className="flex items-center px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              className="flex items-center px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Card
@@ -1329,7 +1471,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                       onChange={(e) => handleCardNameChange(e.target.value)}
                       onFocus={() => newCard.name.length > 2 && cardSuggestions.length > 0 && setShowSuggestions(true)}
                       onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                      className="input-lux"
                       placeholder="e.g., Chase, Amex, Citi..."
                       required
                     />
@@ -1362,7 +1504,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                       type="number"
                       value={newCard.creditLimit}
                       onChange={(e) => setNewCard({ ...newCard, creditLimit: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                      className="input-lux"
                       placeholder="10000"
                       required
                     />
@@ -1376,7 +1518,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                       step="0.01"
                       value={newCard.apr}
                       onChange={(e) => setNewCard({ ...newCard, apr: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                      className="input-lux"
                       placeholder="18.99"
                       required
                     />
@@ -1390,7 +1532,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                       step="0.01"
                       value={newCard.debt}
                       onChange={(e) => setNewCard({ ...newCard, debt: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                      className="input-lux"
                       placeholder="0.00"
                       required
                     />
@@ -1403,9 +1545,58 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                       type="date"
                       value={newCard.dueDate}
                       onChange={(e) => setNewCard({ ...newCard, dueDate: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                      className="input-lux"
                       required
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Reward Points
+                    </label>
+                    <input
+                      type="number"
+                      value={newCard.pointsBalance}
+                      onChange={(e) => setNewCard({ ...newCard, pointsBalance: e.target.value })}
+                      className="input-lux"
+                      placeholder="0"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Reward Type
+                    </label>
+                    <select
+                      value={newCard.rewardType}
+                      onChange={(e) => setNewCard({ ...newCard, rewardType: e.target.value as 'points' | 'miles' | 'cashback' | 'hotel' | 'travel' })}
+                      className="input-lux"
+                    >
+                      <option value="points">Points</option>
+                      <option value="miles">Miles</option>
+                      <option value="cashback">Cashback</option>
+                      <option value="hotel">Hotel Points</option>
+                      <option value="travel">Travel Credits</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Bank/Issuer
+                    </label>
+                    <select
+                      value={newCard.bank}
+                      onChange={(e) => setNewCard({ ...newCard, bank: e.target.value })}
+                      className="input-lux"
+                    >
+                      <option value="">Select Bank</option>
+                      <option value="American Express">American Express</option>
+                      <option value="Chase">Chase</option>
+                      <option value="Capital One">Capital One</option>
+                      <option value="Discover">Discover</option>
+                      <option value="Citi">Citi</option>
+                      <option value="Wells Fargo">Wells Fargo</option>
+                      <option value="Bank of America">Bank of America</option>
+                      <option value="Other">Other</option>
+                    </select>
                   </div>
                 </div>
                 <div className="flex justify-end space-x-3">
@@ -1422,7 +1613,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                    className="px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                   >
                     {editingCard ? 'Update Card' : 'Add Card'}
                   </button>
@@ -1471,13 +1662,26 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                       <div className="text-right mr-3">
                         <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>APR: {card.apr}%</p>
                         <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Due: {card.dueDate ? new Date(card.dueDate).toLocaleDateString() : 'Not set'}</p>
+                        <div className="flex items-center">
+                          <div className={`w-2 h-2 rounded-full mr-2 ${
+                            card.rewardType === 'points' ? 'bg-blue-500' :
+                            card.rewardType === 'miles' ? 'bg-green-500' :
+                            card.rewardType === 'cashback' ? 'bg-amber-500' :
+                            card.rewardType === 'hotel' ? 'bg-purple-500' : 'bg-pink-500'
+                          }`}></div>
+                          <p className={`text-sm font-medium ${
+                            isDarkMode ? 'text-orange-300' : 'text-orange-600'
+                          }`}>
+                            {(card.pointsBalance || 0).toLocaleString()} {card.rewardType || 'points'}
+                          </p>
+                        </div>
                       </div>
                       <button
                         onClick={() => handleEditCreditCard(card)}
                         className={`p-2 rounded-lg transition-colors ${
-                          isDarkMode 
-                            ? 'text-gray-400 hover:text-blue-400 hover:bg-gray-700' 
-                            : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                          isDarkMode
+                            ? 'text-gray-400 hover:text-orange-400 hover:bg-orange-900/30'
+                            : 'text-gray-500 hover:text-orange-600 hover:bg-orange-50'
                         }`}
                         title="Edit credit card"
                       >
@@ -1486,9 +1690,9 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                       <button
                         onClick={() => handleDeleteCreditCard(card.id)}
                         className={`p-2 rounded-lg transition-colors ${
-                          isDarkMode 
-                            ? 'text-gray-400 hover:text-red-400 hover:bg-gray-700' 
-                            : 'text-gray-500 hover:text-red-600 hover:bg-red-50'
+                          isDarkMode
+                            ? 'text-gray-400 hover:text-orange-400 hover:bg-orange-900/30'
+                            : 'text-gray-500 hover:text-orange-600 hover:bg-orange-50'
                         }`}
                         title="Delete credit card"
                       >
@@ -1577,7 +1781,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
               <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Loans</h2>
             <button
               onClick={() => setShowLoanForm(true)}
-              className="flex items-center px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              className="flex items-center px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Loan
@@ -1761,7 +1965,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                    className="px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                   >
                     Add Loan
                   </button>
@@ -1833,7 +2037,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
               <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Crypto Assets</h2>
             <button
               onClick={() => setShowCryptoForm(true)}
-              className="flex items-center px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              className="flex items-center px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Asset
@@ -1990,7 +2194,7 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                    className="px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                   >
                     {editingCrypto ? 'Update Asset' : 'Add Asset'}
                   </button>
@@ -2040,9 +2244,9 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                       <button
                         onClick={() => handleEditCryptoAsset(asset)}
                         className={`p-2 rounded-lg transition-colors ${
-                          isDarkMode 
-                            ? 'text-gray-400 hover:text-blue-400 hover:bg-gray-700' 
-                            : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                          isDarkMode
+                            ? 'text-gray-400 hover:text-orange-400 hover:bg-orange-900/30'
+                            : 'text-gray-500 hover:text-orange-600 hover:bg-orange-50'
                         }`}
                         title="Edit crypto asset"
                       >
@@ -2051,9 +2255,9 @@ export default function Dashboard({ isDarkMode, toggleTheme }: DashboardProps) {
                       <button
                         onClick={() => handleDeleteCryptoAsset(asset.id)}
                         className={`p-2 rounded-lg transition-colors ${
-                          isDarkMode 
-                            ? 'text-gray-400 hover:text-red-400 hover:bg-gray-700' 
-                            : 'text-gray-500 hover:text-red-600 hover:bg-red-50'
+                          isDarkMode
+                            ? 'text-gray-400 hover:text-orange-400 hover:bg-orange-900/30'
+                            : 'text-gray-500 hover:text-orange-600 hover:bg-orange-50'
                         }`}
                         title="Delete crypto asset"
                       >

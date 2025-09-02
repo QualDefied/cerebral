@@ -18,15 +18,18 @@ export const getCreditCards = async (req: Request, res: Response) => {
       const balance = Number(card.currentBalance);
       const apr = Number(card.apr);
       const minPaymentPercentage = Number(card.minimumPaymentPercentage);
-      
+
       const paymentInfo = calculateCreditCardMinimumPayment(balance, apr, minPaymentPercentage);
       const totalInterest = calculateTotalInterestPaid(balance, apr, paymentInfo.minimumPayment);
-      
+
       return {
         ...card,
         currentBalance: balance,
         apr: apr,
         creditLimit: Number(card.creditLimit),
+        pointsBalance: Number(card.pointsBalance),
+        rewardType: card.rewardType,
+        bank: card.bank,
         minimumPaymentPercentage: minPaymentPercentage,
         calculatedMinimumPayment: paymentInfo.minimumPayment,
         interestPortion: paymentInfo.interestPortion,
@@ -59,7 +62,10 @@ export const createCreditCard = async (req: Request, res: Response) => {
       rewardsProgram,
       cashbackRate = 0,
       annualFee = 0,
-      minimumPaymentPercentage = 0.02
+      minimumPaymentPercentage = 0.02,
+      pointsBalance = 0,
+      rewardType = 'points',
+      bank
     } = req.body;
 
     if (!name || !lastFourDigits || !creditLimit || apr === undefined) {
@@ -79,7 +85,10 @@ export const createCreditCard = async (req: Request, res: Response) => {
         rewardsProgram,
         cashbackRate,
         annualFee,
-        minimumPaymentPercentage
+        minimumPaymentPercentage,
+        pointsBalance,
+        rewardType,
+        bank
       }
     });
 
@@ -95,6 +104,9 @@ export const createCreditCard = async (req: Request, res: Response) => {
       currentBalance: balance,
       apr: cardApr,
       creditLimit: Number(creditCard.creditLimit),
+      pointsBalance: Number(creditCard.pointsBalance),
+      rewardType: creditCard.rewardType,
+      bank: creditCard.bank,
       calculatedMinimumPayment: paymentInfo.minimumPayment,
       interestPortion: paymentInfo.interestPortion,
       principalPortion: paymentInfo.principalPortion,
@@ -146,6 +158,9 @@ export const updateCreditCard = async (req: Request, res: Response) => {
       currentBalance: balance,
       apr: cardApr,
       creditLimit: Number(creditCard.creditLimit),
+      pointsBalance: Number(creditCard.pointsBalance),
+      rewardType: creditCard.rewardType,
+      bank: creditCard.bank,
       calculatedMinimumPayment: paymentInfo.minimumPayment,
       interestPortion: paymentInfo.interestPortion,
       principalPortion: paymentInfo.principalPortion,

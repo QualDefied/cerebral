@@ -47,20 +47,33 @@ export default function SavingsSimulator({ isDarkMode }: SavingsSimulatorProps) 
 
   return (
     <div className={`min-h-screen p-8 transition-colors duration-200 ${
-      isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'
+      isDarkMode
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
+        : 'bg-gradient-to-br from-orange-50 via-orange-25 to-orange-100'
     }`}>
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center mb-8">
-          <Calculator className="w-8 h-8 text-green-600 mr-3" />
-          <h1 className="text-3xl font-bold">High Yield Savings Simulator</h1>
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center mb-4">
+            <div className="p-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl shadow-lg mr-3">
+              <Calculator className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 bg-clip-text text-transparent">
+              Savings Simulator
+            </h1>
+          </div>
+          <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} max-w-2xl mx-auto`}>
+            Calculate compound interest growth and plan your financial future with our interactive simulator
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Input Controls */}
-          <div className={`p-6 rounded-xl shadow-lg ${
-            isDarkMode ? 'bg-gray-800' : 'bg-white'
-          }`}>
-            <h2 className="text-xl font-semibold mb-4">Settings</h2>
+          <div className={`p-6 rounded-xl shadow-lg border transition-all duration-200 hover:shadow-xl ${
+            isDarkMode
+              ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700 hover:border-orange-500/30'
+              : 'bg-gradient-to-br from-white to-orange-50 border-gray-200 hover:border-orange-300'
+          } backdrop-blur-sm`}>
+            <h2 className="text-xl font-semibold mb-4 bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">Settings</h2>
             
             <div className="space-y-4">
               <div>
@@ -217,9 +230,9 @@ export default function SavingsSimulator({ isDarkMode }: SavingsSimulatorProps) 
                 <Line 
                   type="monotone" 
                   dataKey="balance" 
-                  stroke="#10b981" 
+                  stroke={isDarkMode ? '#fb923c' : '#ea580c'} 
                   strokeWidth={3}
-                  dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                  dot={{ fill: isDarkMode ? '#fb923c' : '#ea580c', strokeWidth: 2, r: 4 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -255,7 +268,7 @@ export default function SavingsSimulator({ isDarkMode }: SavingsSimulatorProps) 
                 />
                 <Bar 
                   dataKey="interest" 
-                  fill="#3b82f6"
+                  fill={isDarkMode ? '#fb923c' : '#ea580c'}
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>

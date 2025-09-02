@@ -118,6 +118,8 @@ model CreditCard {
   apr           Decimal
   rewardsProgram String?
   pointsBalance  Int      @default(0)
+  rewardType    String?  @default("points")
+  bank          String?
   cashbackRate   Decimal? @default(0)
   annualFee      Decimal  @default(0)
   minimumPaymentPercentage Decimal @default(0.02)
@@ -126,7 +128,7 @@ model CreditCard {
   updatedAt      DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@map("credit_cards")
 }
 
