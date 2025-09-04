@@ -1214,7 +1214,7 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
           throw new Error('Failed to wipe server data');
         }
 
-        // Clear client-side state
+        // Clear client-side state - ALL state variables
         setCreditCards([]);
         setLoans([]);
         setCryptoAssets([]);
@@ -1225,18 +1225,46 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
           monthlyExpenses: 0
         });
 
+        // Refresh data from server after wipe (optional - don't fail if server is down)
+        try {
+          await fetchCreditCards();
+          await fetchCryptoAssets();
+        } catch (fetchError) {
+          console.warn('Could not refresh data from server after wipe:', fetchError);
+        }
+
         setCreditScore(0);
+        setMonthlyIncome(0);
         setShowCreditCardForm(false);
         setShowLoanForm(false);
         setShowCryptoForm(false);
         setShowExpenseForm(false);
         setShowBalanceForm(false);
+        setShowSettings(false);
+        setShowDebtBreakdown(false);
+        setShowMinPaymentDropdown(false);
+        setShowAssetDropdown(false);
+        setShowLoanEditForm(false);
+        setShowSuggestions(false);
 
+        // Reset editing states
+        setEditingCard(null);
+        setEditingCrypto(null);
+        setEditingExpense(null);
+        setEditingBalance('');
+        setEditingAsset(null);
+        setEditingLoan(null);
+        setTempBalance('');
+
+        // Reset form data
         setNewCard({ name: '', creditLimit: '', apr: '', dueDate: '', debt: '', pointsBalance: '', rewardType: 'points', bank: '' });
         setNewLoan({ name: '', originalAmount: '', currentBalance: '', interestRate: '', monthlyPayment: '', loanType: '', originationDate: '', paymentDate: '' });
         setNewCrypto({ symbol: '', quantity: '', averageCost: '', currentPrice: '', platform: '', walletAddress: '' });
         setNewExpense({ name: '', amount: '', category: 'food', frequency: 'monthly', isRecurring: true });
-        
+
+        // Reset suggestions and UI states
+        setCardSuggestions([]);
+
         // Clear browser storage using centralized utility
         clearAllLocalStorage();
 
