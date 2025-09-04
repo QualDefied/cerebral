@@ -1,10 +1,8 @@
-import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Calculator,
-  Banknote,
-  ArrowUpDown
+  Calendar
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -16,9 +14,8 @@ export default function Navigation({ isDarkMode }: NavigationProps) {
 
   const navItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/calendar', icon: Calendar, label: 'Calendar' },
     { path: '/savings-simulator', icon: Calculator, label: 'Savings Simulator' },
-    { path: '/accounts', icon: Banknote, label: 'Accounts' },
-    { path: '/transactions', icon: ArrowUpDown, label: 'Transactions' },
   ];
 
     return (

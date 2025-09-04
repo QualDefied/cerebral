@@ -1,13 +1,31 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import Dashboard from './pages/Dashboard';
+import Calendar from './pages/Calendar';
 import SavingsSimulator from './pages/SavingsSimulator';
-import Accounts from './pages/Accounts';
-import Transactions from './pages/Transactions';
 import Navigation from './components/Navigation';
+
+interface CreditCard {
+  id: string;
+  name: string;
+  creditLimit: number;
+  currentBalance?: number;
+  debt?: number;
+  apr: number;
+  dueDate?: string;
+  lastFourDigits?: string;
+  pointsBalance?: number;
+  rewardType?: 'points' | 'miles' | 'cashback' | 'hotel' | 'travel';
+  bank?: string;
+  calculatedMinimumPayment?: number;
+  interestPortion?: number;
+  principalPortion?: number;
+  payoffTimeMonths?: number;
+}
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
@@ -20,10 +38,9 @@ function App() {
       <Navigation isDarkMode={isDarkMode} />
       <div className="ml-64 p-8">
         <Routes>
-          <Route path="/dashboard" element={<Dashboard isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
+          <Route path="/dashboard" element={<Dashboard isDarkMode={isDarkMode} toggleTheme={toggleTheme} creditCards={creditCards} setCreditCards={setCreditCards} />} />
+          <Route path="/calendar" element={<Calendar isDarkMode={isDarkMode} creditCards={creditCards} />} />
           <Route path="/savings-simulator" element={<SavingsSimulator isDarkMode={isDarkMode} />} />
-          <Route path="/accounts" element={<Accounts />} />
-          <Route path="/transactions" element={<Transactions />} />
           <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
       </div>

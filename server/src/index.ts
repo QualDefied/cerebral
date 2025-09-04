@@ -3,10 +3,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './utils/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import { accountRoutes } from './routes/accounts.js';
-import { transactionRoutes } from './routes/transactions.js';
 import { creditCardRoutes } from './routes/creditCards.js';
 import { cryptoRoutes } from './routes/crypto.js';
+import { dataRoutes } from './routes/data.js';
 
 dotenv.config();
 
@@ -22,10 +21,9 @@ app.use(cors({
 app.use(express.json());
 
 // API Routes
-app.use('/api/accounts', accountRoutes);
-app.use('/api/transactions', transactionRoutes);
 app.use('/api/credit-cards', creditCardRoutes);
 app.use('/api/crypto-assets', cryptoRoutes);
+app.use('/api/data', dataRoutes);
 
 // Health Check
 app.get('/api/health', (_req, res) => {
@@ -39,10 +37,9 @@ app.get('/', (_req, res) => {
     status: 'running',
     endpoints: {
       health: '/api/health',
-      accounts: '/api/accounts',
-      transactions: '/api/transactions',
       creditCards: '/api/credit-cards',
-      cryptoAssets: '/api/crypto-assets'
+      cryptoAssets: '/api/crypto-assets',
+      data: '/api/data'
     }
   });
 });

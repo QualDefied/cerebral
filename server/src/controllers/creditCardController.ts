@@ -53,6 +53,7 @@ export const createCreditCard = async (req: Request, res: Response) => {
       creditLimit,
       currentBalance = 0,
       apr,
+      dueDate,
       rewardsProgram,
       cashbackRate = 0,
       annualFee = 0,
@@ -75,6 +76,7 @@ export const createCreditCard = async (req: Request, res: Response) => {
         creditLimit,
         currentBalance,
         apr,
+        dueDate: dueDate ? new Date(dueDate) : null,
         rewardsProgram,
         cashbackRate,
         annualFee,
@@ -131,6 +133,11 @@ export const updateCreditCard = async (req: Request, res: Response) => {
     const updateData = { ...req.body };
     delete updateData.id;
 
+    // Convert dueDate to proper Date object if it exists
+    if (updateData.dueDate) {
+      updateData.dueDate = new Date(updateData.dueDate);
+    }
+
     const creditCard = await prisma.creditCard.update({
       where: { id },
       data: updateData
@@ -139,10 +146,10 @@ export const updateCreditCard = async (req: Request, res: Response) => {
     const balance = Number(creditCard.currentBalance);
     const cardApr = Number(creditCard.apr);
     const minPaymentPercentage = Number(creditCard.minimumPaymentPercentage);
-    
+
     const paymentInfo = calculateCreditCardMinimumPayment(balance, cardApr, minPaymentPercentage);
     const totalInterest = calculateTotalInterestPaid(balance, cardApr, paymentInfo.minimumPayment);
-    
+
     const creditCardWithPayments = {
       ...creditCard,
       currentBalance: balance,

@@ -7,36 +7,6 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model Account {
-  id           String      @id @default(cuid())
-  name         String
-  type         String      // "CHECKING" | "SAVINGS" | "CREDIT_CARD" | "INVESTMENT" | "LOAN"
-  balance      Decimal     @default(0)
-  currency     String      @default("USD")
-  isActive     Boolean     @default(true)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-
-  transactions Transaction[]
-
-  @@map("accounts")
-}
-
-model Transaction {
-  id          String            @id @default(cuid())
-  accountId   String
-  amount      Decimal
-  description String
-  category    String            // "FOOD_DINING" | "TRANSPORTATION" | etc.
-  type        String            // "INCOME" | "EXPENSE" | "TRANSFER"
-  date        DateTime
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
-
-  @@map("transactions")
-}
 
 model Budget {
   id         String   @id @default(cuid())
@@ -72,6 +42,7 @@ model CreditCard {
   creditLimit   Decimal
   currentBalance Decimal  @default(0)
   apr           Decimal
+  dueDate       DateTime?
   rewardsProgram String?
   pointsBalance  Int      @default(0)
   rewardType    String?  @default("points")
@@ -100,4 +71,5 @@ model CryptoAsset {
 
   @@map("crypto_assets")
 }
+
 
