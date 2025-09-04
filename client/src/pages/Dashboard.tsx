@@ -365,20 +365,20 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Fetch credit cards from API
-  useEffect(() => {
-    const fetchCreditCards = async () => {
-      try {
-        const response = await fetch('http://127.0.0.1:9002/api/credit-cards');
-        if (response.ok) {
-          const data = await response.json();
-          setCreditCards(data);
-        }
-      } catch (error) {
-        console.error('Error fetching credit cards:', error);
+  const fetchCreditCardsData = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:9002/api/credit-cards');
+      if (response.ok) {
+        const data = await response.json();
+        setCreditCards(data);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching credit cards:', error);
+    }
+  };
 
-    fetchCreditCards();
+  useEffect(() => {
+    fetchCreditCardsData();
     fetchCryptoAssets();
   }, []);
 
@@ -1227,7 +1227,7 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
 
         // Refresh data from server after wipe (optional - don't fail if server is down)
         try {
-          await fetchCreditCards();
+          await fetchCreditCardsData();
           await fetchCryptoAssets();
         } catch (fetchError) {
           console.warn('Could not refresh data from server after wipe:', fetchError);
