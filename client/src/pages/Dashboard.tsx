@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, CreditCard, TrendingUp, TrendingDown, Plus, X, Edit, Target, Moon, Sun, Wallet, Star, Home, Bitcoin, Search, Bell, Settings, Trash2, ChevronDown, ChevronUp, Building } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, Tooltip, Text } from 'recharts';
+import { DollarSign, CreditCard, TrendingDown, Plus, X, Edit, Target, Moon, Sun, Wallet, Star, Home, Bitcoin, Settings, Trash2, ChevronDown, ChevronUp, Building } from 'lucide-react';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Text } from 'recharts';
 import { STORAGE_KEYS, clearAllLocalStorage, saveToStorage, loadFromStorage } from '../utils/storage';
 
 interface CreditCard {
@@ -533,76 +533,10 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
   const [showDebtBreakdown, setShowDebtBreakdown] = useState(false);
   const [showMinPaymentDropdown, setShowMinPaymentDropdown] = useState(false);
 
-  // Credit score ranges based on FICO scores
-  const getCreditScoreRange = (score: number) => {
-    if (score >= 800) return { range: 'Exceptional', color: '#10B981', percentage: 20 };
-    if (score >= 740) return { range: 'Very Good', color: '#059669', percentage: 25 };
-    if (score >= 670) return { range: 'Good', color: '#FBBF24', percentage: 21 };
-    if (score >= 580) return { range: 'Fair', color: '#F59E0B', percentage: 17 };
-    if (score >= 300) return { range: 'Poor', color: '#EF4444', percentage: 17 };
-    return { range: 'Not Set', color: '#6B7280', percentage: 0 };
-  };
 
-  const creditScoreData = getCreditScoreRange(creditScore);
 
-  // Generate a simple trend for balance sparkline (last 6 points)
-  const generateBalanceTrend = () => {
-    const base = Math.max(0, balances.totalBalance);
-    const points = [0.82, 0.88, 0.94, 0.9, 0.96, 1.0];
-    return points.map((p, i) => ({ idx: i, value: Math.round(base * p) }));
-  };
 
-  const balanceTrend = generateBalanceTrend();
 
-  // Simple pie chart component
-  const CreditScorePieChart = ({ score, data }: { score: number; data: any }) => {
-    const radius = 60;
-    const circumference = 2 * Math.PI * radius;
-    const scorePercentage = score > 0 ? ((score - 300) / (850 - 300)) * 100 : 0;
-    const strokeDasharray = circumference;
-    const strokeDashoffset = circumference - (scorePercentage / 100) * circumference;
-
-    return (
-      <div className="relative w-32 h-32 mx-auto">
-        <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 144 144">
-          {/* Background circle */}
-          <circle
-            cx="72"
-            cy="72"
-            r={radius}
-            stroke={isDarkMode ? '#374151' : '#E5E7EB'}
-            strokeWidth="8"
-            fill="transparent"
-          />
-          {/* Progress circle */}
-          {score > 0 && (
-            <circle
-              cx="72"
-              cy="72"
-              r={radius}
-              stroke={data.color}
-              strokeWidth="8"
-              fill="transparent"
-              strokeDasharray={strokeDasharray}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              className="transition-all duration-500 ease-in-out"
-            />
-          )}
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              {score || '---'}
-            </div>
-            <div className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              {data.range}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   // Calculate total credit card debt from all cards
   const totalCreditCardDebt = creditCards.reduce((total, card) => total + (card.currentBalance || card.debt || 0), 0);
@@ -893,7 +827,7 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
     setShowCreditCardForm(true);
   };
 
-  const handleUpdateCreditCard = async (e: React.FormEvent) => {
+  const handleUpdateCreditCard = async () => {
     if (newCard.name && newCard.creditLimit && newCard.apr && newCard.dueDate && newCard.debt !== '') {
       try {
         const cardData = {
@@ -978,24 +912,6 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
     }
   };
 
-  const handleEditBalance = (balanceType: string) => {
-    // Don't allow editing auto-calculated values
-    if (balanceType === 'creditCardDebt' || balanceType === 'totalCreditLimit' || balanceType === 'totalLoanDebt') {
-      return;
-    }
-    
-    // Handle credit score separately
-    if (balanceType === 'creditScore') {
-      setEditingBalance(balanceType);
-      setTempBalance(creditScore.toString());
-      setShowBalanceForm(true);
-      return;
-    }
-    
-    setEditingBalance(balanceType);
-    setTempBalance((balances as any)[balanceType].toString());
-    setShowBalanceForm(true);
-  };
 
   const handleSaveBalance = () => {
     if (tempBalance !== '' && !isNaN(parseFloat(tempBalance))) {
@@ -1004,7 +920,7 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
         const score = Math.max(300, Math.min(850, parseInt(tempBalance)));
         setCreditScore(score);
       } else {
-        setBalances(prev => ({
+        setBalances((prev: typeof balances) => ({
           ...prev,
           [editingBalance as keyof typeof prev]: parseFloat(tempBalance)
         }));
@@ -1224,6 +1140,10 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
           monthlyIncome: 0,
           monthlyExpenses: 0
         });
+        setCustomAssets({
+          crypto: 0,
+          bank: 0
+        });
 
         // Refresh data from server after wipe (optional - don't fail if server is down)
         try {
@@ -1322,7 +1242,7 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
       key: 'monthlyIncome',
       name: 'Monthly Income',
       value: `$${formatNumber(balances.monthlyIncome, { compact: balances.monthlyIncome >= 100000, decimals: 2 })}`,
-      icon: TrendingUp,
+      icon: DollarSign,
       positive: true
     },
     {
@@ -1383,16 +1303,7 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
     }
   ];
 
-  const overallPositive = (stats: any[]) => {
-    const positiveCount = stats.filter(stat => stat.positive).length;
-    return positiveCount > stats.length / 2;
-  };
 
-  const statSummaryDirectionClass = (stats: any[]) => {
-    return overallPositive(stats)
-      ? (isDarkMode ? 'text-green-400' : 'text-green-600')
-      : (isDarkMode ? 'text-red-400' : 'text-red-600');
-  };
 
   return (
     <div className="relative min-h-screen">
@@ -1413,16 +1324,8 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
       {/* Header with greeting and actions */}
       <div className="flex items-center justify-between mb-10">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">Welcome back</h1>
-          <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Here’s an overview of your finances</p>
         </div>
         <div className="flex items-center space-x-3 relative">
-          <button className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`} title="Search">
-            <Search className="w-5 h-5" />
-          </button>
-          <button className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`} title="Notifications">
-            <Bell className="w-5 h-5" />
-          </button>
           <div className="relative">
             <button onClick={() => setShowSettings(v => !v)} className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`} title="Settings">
               <Settings className="w-5 h-5" />
@@ -1445,13 +1348,6 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
             <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               Your complete financial snapshot at a glance
             </p>
-          </div>
-          <div className={`px-4 py-2 rounded-full text-sm font-medium ${
-            overallPositive(stats)
-              ? isDarkMode ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'
-              : isDarkMode ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-800'
-          }`}>
-            {overallPositive(stats) ? '📈 Trending Up' : '📉 Needs Attention'}
           </div>
         </div>
 
@@ -1973,13 +1869,6 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
               : 'bg-gradient-to-br from-white to-purple-50 border-gray-200 hover:border-purple-300'
           }`}>
             <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-lg ${
-                isDarkMode ? 'bg-purple-500/20' : 'bg-purple-100'
-              }`}>
-                <TrendingUp className={`w-6 h-6 ${
-                  isDarkMode ? 'text-purple-300' : 'text-purple-600'
-                }`} />
-              </div>
               <div className="flex items-center gap-2">
                 <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                   totalMinimumPayments < 500
@@ -2485,7 +2374,7 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (editingCard) {
-                    handleUpdateCreditCard(e);
+                    handleUpdateCreditCard();
                   } else {
                     handleAddCreditCard(e);
                   }
@@ -2679,7 +2568,7 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
                             const icon = target.nextElementSibling as HTMLElement;
                             if (icon) icon.classList.remove('hidden');
                           }}
-                          onLoad={(e) => {
+                          onLoad={() => {
                             console.log('Image loaded successfully:', card.name, getCreditCardImage(card.name));
                           }}
                         />
@@ -3238,15 +3127,15 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
 
           <div className="space-y-4">
             {loans.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Home className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <div className={`text-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <Home className={`w-12 h-12 mx-auto mb-3 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
                 <p>No loans added yet</p>
                 <p className="text-sm">Click "Add Loan" to get started</p>
               </div>
             ) : (
               loans.map((loan) => (
                 <div key={loan.id} className={`p-4 border rounded-lg transition-colors duration-200 ${
-                  isDarkMode ? 'border-gray-600 bg-white' : 'border-gray-200'
+                  isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200'
                 }`}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center">
@@ -3254,8 +3143,8 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
                         <Home className="w-6 h-6 text-orange-600" />
                       </div>
                       <div className="ml-3">
-                        <p className="font-medium text-gray-900">{loan.name}</p>
-                        <p className="text-sm text-gray-500">{loan.loanType}</p>
+                        <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{loan.name}</p>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>{loan.loanType}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -3282,10 +3171,10 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
                         <Trash2 className="w-4 h-4" />
                       </button>
                       <div className="text-right">
-                        <p className="text-sm text-gray-600">Interest: {loan.interestRate}%</p>
-                        <p className="text-sm text-gray-600">Payment: ${loan.monthlyPayment.toLocaleString()}/mo</p>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Interest: {loan.interestRate}%</p>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Payment: ${loan.monthlyPayment.toLocaleString()}/mo</p>
                         {loan.originationDate && (
-                          <p className="text-sm text-gray-600">Started: {new Date(loan.originationDate).toLocaleDateString()}</p>
+                          <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Started: {new Date(loan.originationDate).toLocaleDateString()}</p>
                         )}
                         {loan.paymentDate && (
                           <p className="text-sm text-blue-600 font-medium">Payment Due: {new Date(loan.paymentDate).toLocaleDateString()}</p>
@@ -3293,21 +3182,21 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 pt-3 border-t border-gray-200">
+                  <div className={`grid grid-cols-3 gap-4 pt-3 border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
                     <div>
-                      <p className="text-sm text-gray-600">Original Amount</p>
+                      <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Original Amount</p>
                       <p className="font-bold text-blue-600">
                         ${loan.originalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Current Balance</p>
+                      <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Current Balance</p>
                       <p className={`font-bold ${loan.currentBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
                         ${loan.currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Equity Built</p>
+                      <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Equity Built</p>
                       <p className="font-bold text-green-600">
                         ${(loan.originalAmount - loan.currentBalance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
@@ -3597,13 +3486,13 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
               </h2>
               <div className="flex items-center gap-2">
                 <div className={`text-sm px-3 py-1 rounded-full ${
-                  isDarkMode ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-100 text-purple-700'
+                  isDarkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-100 text-orange-700'
                 }`}>
                   ${totalMonthlyExpenses.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </div>
                 <button
                   onClick={() => setShowExpenseForm(true)}
-                  className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg shadow hover:shadow-md transition-all duration-200"
+                  className="flex items-center px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Expense
@@ -3747,7 +3636,7 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
                     </button>
                     <button
                       type="submit"
-                      className="px-6 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg shadow hover:shadow-md transition-all duration-200"
+                      className="px-6 py-2 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-lg shadow hover:shadow-md transition-all duration-200"
                     >
                       {editingExpense ? 'Update Expense' : 'Add Expense'}
                     </button>
@@ -3770,8 +3659,8 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
                   }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center flex-1 min-w-0">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                          <TrendingDown className="w-5 h-5 text-purple-600" />
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                          <TrendingDown className="w-5 h-5 text-orange-600" />
                         </div>
                         <div className="ml-3 flex-1 min-w-0">
                           <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -3785,7 +3674,7 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
                       </div>
                       <div className="flex items-center space-x-2 ml-4">
                         <div className="text-right">
-                          <p className={`text-lg font-bold text-purple-600`}>
+                          <p className={`text-lg font-bold text-orange-600`}>
                             ${expense.amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </p>
                           <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -3796,8 +3685,8 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
                           onClick={() => handleEditExpense(expense)}
                           className={`p-2 rounded transition-colors ${
                             isDarkMode
-                              ? 'text-gray-400 hover:text-purple-400 hover:bg-purple-900/30'
-                              : 'text-gray-500 hover:text-purple-600 hover:bg-purple-50'
+                              ? 'text-gray-400 hover:text-orange-400 hover:bg-orange-900/30'
+                              : 'text-gray-500 hover:text-orange-600 hover:bg-orange-50'
                           }`}
                           title="Edit expense"
                         >
