@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, CreditCard, TrendingDown, Plus, X, Edit, Target, Moon, Sun, Wallet, Star, Home, Bitcoin, Settings, Trash2, ChevronDown, ChevronUp, Building } from 'lucide-react';
+import { DollarSign, CreditCard, TrendingDown, Plus, X, Edit, Target, Moon, Sun, Wallet, Star, Home, Bitcoin, Settings, Trash2, ChevronDown, ChevronUp, Building, Download, FileText } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Text } from 'recharts';
 import { STORAGE_KEYS, clearAllLocalStorage, saveToStorage, loadFromStorage } from '../utils/storage';
 
@@ -1196,6 +1196,87 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
     }
   };
 
+  const handleExportForLLM = async () => {
+    try {
+      // Prepare comprehensive client data
+      const clientData = {
+        loans: loans,
+        expenses: expenses,
+        balances: {
+          totalBalance: balances.totalBalance,
+          monthlyIncome: balances.monthlyIncome || monthlyIncome,
+          monthlyExpenses: balances.monthlyExpenses
+        },
+        customAssets: customAssets,
+        creditScore: creditScore
+      };
+
+      const response = await fetch('http://127.0.0.1:9002/api/financial-profile/llm', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ clientData })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate financial profile');
+      }
+
+      const data = await response.json();
+      
+      // Copy to clipboard
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(data.profile);
+        alert('Complete financial profile copied to clipboard! This includes all your credit cards, loans, expenses, assets, and cash flow data. You can now paste it into your financial advisor LLM chat.');
+      } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = data.profile;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('Complete financial profile copied to clipboard! This includes all your credit cards, loans, expenses, assets, and cash flow data. You can now paste it into your financial advisor LLM chat.');
+      }
+      
+      setShowSettings(false);
+    } catch (error) {
+      console.error('Error exporting financial profile:', error);
+      alert('Failed to export financial profile. Please try again.');
+    }
+  };
+
+  const handleDownloadProfile = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:9002/api/financial-profile/download', {
+        method: 'GET'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download financial profile');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      const timestamp = new Date().toISOString().split('T')[0];
+      a.download = `financial-profile-${timestamp}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      setShowSettings(false);
+    } catch (error) {
+      console.error('Error downloading financial profile:', error);
+      alert('Failed to download financial profile. Please try again.');
+    }
+  };
+
 
 
   // Calculate totals by reward type
@@ -1331,8 +1412,33 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
               <Settings className="w-5 h-5" />
             </button>
             {showSettings && (
-              <div className={`absolute right-0 mt-2 w-48 rounded-lg border shadow-lg z-50 ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
-                <button onClick={handleWipeAllData} className={`w-full text-left px-3 py-2 text-sm rounded-lg ${isDarkMode ? 'text-red-300 hover:bg-gray-800' : 'text-red-600 hover:bg-gray-50'}`}>Reset Data</button>
+              <div className={`absolute right-0 mt-2 w-64 rounded-lg border shadow-lg z-50 ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
+                <div className="py-1">
+                  <button 
+                    onClick={handleExportForLLM} 
+                    className={`w-full text-left px-3 py-2 text-sm rounded-t-lg flex items-center space-x-2 ${isDarkMode ? 'text-blue-300 hover:bg-gray-800' : 'text-blue-600 hover:bg-blue-50'}`}
+                    title="Copy financial profile to clipboard for LLM"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Copy for Financial Advisor</span>
+                  </button>
+                  <button 
+                    onClick={handleDownloadProfile} 
+                    className={`w-full text-left px-3 py-2 text-sm flex items-center space-x-2 ${isDarkMode ? 'text-green-300 hover:bg-gray-800' : 'text-green-600 hover:bg-green-50'}`}
+                    title="Download financial profile as text file"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download Profile</span>
+                  </button>
+                  <hr className={`my-1 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`} />
+                  <button 
+                    onClick={handleWipeAllData} 
+                    className={`w-full text-left px-3 py-2 text-sm rounded-b-lg flex items-center space-x-2 ${isDarkMode ? 'text-red-300 hover:bg-gray-800' : 'text-red-600 hover:bg-red-50'}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Reset Data</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>

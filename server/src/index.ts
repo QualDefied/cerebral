@@ -6,6 +6,8 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { creditCardRoutes } from './routes/creditCards.js';
 import { cryptoRoutes } from './routes/crypto.js';
 import { dataRoutes } from './routes/data.js';
+import { financialProfileRoutes } from './routes/financialProfile.js';
+import { userGoalsRoutes } from './routes/userGoals.js';
 
 dotenv.config();
 
@@ -24,6 +26,8 @@ app.use(express.json());
 app.use('/api/credit-cards', creditCardRoutes);
 app.use('/api/crypto-assets', cryptoRoutes);
 app.use('/api/data', dataRoutes);
+app.use('/api/financial-profile', financialProfileRoutes);
+app.use('/api/user-goals', userGoalsRoutes);
 
 // Health Check
 app.get('/api/health', (_req, res) => {
@@ -39,7 +43,9 @@ app.get('/', (_req, res) => {
       health: '/api/health',
       creditCards: '/api/credit-cards',
       cryptoAssets: '/api/crypto-assets',
-      data: '/api/data'
+      data: '/api/data',
+      financialProfile: '/api/financial-profile',
+      userGoals: '/api/user-goals'
     }
   });
 });

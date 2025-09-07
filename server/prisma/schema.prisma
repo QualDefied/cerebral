@@ -72,4 +72,25 @@ model CryptoAsset {
   @@map("crypto_assets")
 }
 
+model UserGoals {
+  id                    String   @id @default(cuid())
+  primaryGoal           String   // "debt_payoff" | "emergency_fund" | "investment" | "retirement" | "major_purchase"
+  secondaryGoals        String?  // JSON array of additional goals
+  targetSavingsRate     Decimal? // Percentage of income to save
+  emergencyFundTarget   Decimal? // Target emergency fund amount
+  debtPayoffTimeframe   Int?     // Months to pay off debt
+  riskTolerance         String?  // "conservative" | "moderate" | "aggressive"
+  monthlyIncome         Decimal? // Monthly gross income
+  monthlyExpenses       Decimal? // Monthly fixed expenses
+  retirementAge         Int?     // Target retirement age
+  majorPurchaseTarget   String?  // Description of major purchase goal
+  majorPurchaseAmount   Decimal? // Target amount for major purchase
+  majorPurchaseTimeframe Int?    // Months to reach major purchase goal
+  notes                 String?  // Additional context and preferences
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("user_goals")
+}
+
 
