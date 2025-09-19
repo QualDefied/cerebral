@@ -37,7 +37,7 @@ app.get('/api/health', (_req, res) => {
 // Root route
 app.get('/', (_req, res) => {
   res.json({
-    message: 'TeamShell Finance API Server',
+    message: 'Cerebral Finance API Server',
     status: 'running',
     endpoints: {
       health: '/api/health',

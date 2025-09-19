@@ -1,103 +1,224 @@
-# Cerebral Finance - Local Session-Only Version
+# Cerebral Finance
 
-A lightweight financial management web application designed for **LOCAL USE ONLY** with session-only storage. All data is wiped when the server restarts or when you click the "Wipe Data" button.
+A comprehensive financial management web application designed for personal finance tracking and analysis. Features both local development with optional database persistence and session-only modes.
 
-## 🔒 Privacy Features
+## 🔒 Privacy & Security
 
-- **NO DATABASE** - All data stored in memory only
-- **SESSION-ONLY** - Data disappears when server restarts
-- **LOCAL HOSTING** - Only accessible from your computer (127.0.0.1)
-- **WIPE BUTTON** - Clear all data instantly with one click
-- **NO PERSISTENCE** - Perfect for temporary financial planning
+- **Local Development** - Runs entirely on your local machine (127.0.0.1)
+- **Optional Database** - Choose between persistent database storage or session-only memory storage
+- **No External Dependencies** - All data processing happens locally
+- **Secure by Design** - Built with security best practices and OWASP guidelines
 
 ## Features
 
-- 💳 **Credit Card Management** - Add credit cards with name, limit, APR, and due dates
-- 🏠 **Loan Management** - Track loans with monthly payments and balances
-- 💰 **Expense Tracking** - Add and categorize monthly expenses with different frequencies
-- 📊 **Dashboard Overview** - View financial stats including total minimum payments
-- 📋 **Payment Breakdown** - Detailed breakdown showing credit cards, loans, and expenses
-- 🗑️ **Data Wipe** - Clear all session data with the red "Wipe Data" button
+### 💳 Credit Card Management
+- Add and track multiple credit cards with detailed information
+- APR tracking and minimum payment calculations
+- Due date management with calendar integration
+- Balance tracking and utilization monitoring
+- Rewards points and cashback tracking
+- Payoff time estimation with different payment strategies
+
+### 🏠 Debt Management
+- Personal loan tracking with payment schedules
+- Mortgage and auto loan management
+- Debt consolidation planning
+- Payment optimization strategies
+
+### 💰 Expense Tracking
+- Categorize and track monthly expenses
+- Support for different frequencies (daily, weekly, monthly, yearly)
+- Budget planning and monitoring
+- Expense analytics and trends
+
+### 📊 Financial Dashboard
+- Comprehensive overview of all financial accounts
+- Real-time calculations of total minimum payments
+- Payment breakdown with detailed categorization
+- Visual charts and analytics using Recharts
+- Dark/light theme support
+
+### 📅 Calendar Integration
+- Credit card due date tracking
+- Payment reminder system
+- Financial event scheduling
+- Calendar export functionality
+
+### 💹 Investment Tracking
+- Cryptocurrency portfolio management
+- Stock and ETF tracking (planned)
+- Performance analytics and reporting
+- Wallet and exchange integration
+
+### 🎯 Financial Planning
+- Savings simulator with compound interest calculations
+- Goal setting and progress tracking
+- Retirement planning tools
+- Budget optimization suggestions
 
 ## Tech Stack
 
 ### Frontend
-- React 18 with TypeScript
-- Vite for fast development
-- Tailwind CSS for styling
+- **React 18** with TypeScript for type safety
+- **Vite** for fast development and optimized builds
+- **Tailwind CSS** for modern, responsive styling
+- **React Router** for client-side navigation
+- **Recharts** for data visualization and charts
+- **Lucide React** for consistent iconography
+- **React Hook Form** with Zod validation for forms
+- **Axios** for API communication
 
 ### Backend
-- Node.js with Express
-- In-memory storage only
-- No database, no persistence
+- **Node.js** with Express.js for the API server
+- **TypeScript** for type safety and better development experience
+- **Prisma ORM** with database support
+- **PostgreSQL** database (optional, can run in memory mode)
+- **Express Rate Limiting** for API protection
+- **Helmet** for security headers
+- **CORS** for cross-origin requests
+- **Express Validator** for input validation
 
-## Local Setup (Session-Only)
+## Setup & Installation
 
 ### Prerequisites
-- Node.js 18+
-- npm
+- **Node.js 18+**
+- **npm** (comes with Node.js)
+- **Optional**: PostgreSQL (if you want persistent database storage)
 
 ### Quick Start
 
-1. Install dependencies:
+1. **Install all dependencies** (from project root):
    ```bash
-   # Install client dependencies
-   cd client
-   npm install
-
-   # Install server dependencies  
-   cd ../server
-   npm install
+   npm run install:all
    ```
 
-2. Start the backend server:
+2. **Set up the database** (optional, for persistent storage):
    ```bash
    cd server
-   npm run dev
+   npm run db:migrate
    ```
 
-3. In a new terminal, start the frontend:
+3. **Start the development servers**:
    ```bash
-   cd client
    npm run dev
    ```
 
-4. Open your browser to: **http://127.0.0.1:5173**
+4. **Open your browser**:
+   - Frontend: **http://127.0.0.1:5173**
+   - Backend API: **http://127.0.0.1:5000**
 
-### Important Notes
-- Server runs on **127.0.0.1:5000** (local-only)
-- Client runs on **127.0.0.1:5173** (local-only)
-- All data is **temporary** and will be lost when you:
-  - Restart the server
-  - Click the "Wipe Data" button
-  - Close the application
+### Development Scripts
 
-## Scripts
-
-- `npm run dev` - Start both frontend and backend in development mode
+#### Root Level Scripts
+- `npm run dev` - Start both frontend and backend concurrently
 - `npm run build` - Build both frontend and backend for production
 - `npm run install:all` - Install dependencies for all packages
+- `npm run client:dev` - Start only the frontend
+- `npm run server:dev` - Start only the backend
+
+#### Client Scripts (in `/client` directory)
+- `npm run dev` - Start the React development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build locally
+- `npm run lint` - Run ESLint on the codebase
+
+#### Server Scripts (in `/server` directory)
+- `npm run dev` - Start the server in development mode with auto-reload
+- `npm run build` - Compile TypeScript to JavaScript
+- `npm run start` - Start the production server
+- `npm run test` - Run Jest tests
+- `npm run lint` - Run ESLint on the codebase
+- `npm run db:migrate` - Run database migrations
+- `npm run db:generate` - Generate Prisma client
+- `npm run db:studio` - Open Prisma Studio for database management
+
+### Database Configuration
+
+The application supports two modes:
+
+1. **Session-Only Mode** (Default)
+   - No database required
+   - Data stored in memory only
+   - Data is lost when server restarts
+   - Perfect for testing and temporary analysis
+
+2. **Persistent Mode** (Optional)
+   - Requires PostgreSQL database
+   - Data persists between server restarts
+   - Run `npm run db:migrate` to set up database
+   - Configure connection string in `server/.env`
+
+### Environment Variables
+
+Create a `.env` file in the `/server` directory:
+```
+DATABASE_URL="postgresql://username:password@localhost:5432/cerebral_finance"
+PORT=5000
+NODE_ENV=development
+```
 
 ## Project Structure
 
 ```
-├── client/          # React frontend application
+cerebral/
+├── client/                          # React frontend application
 │   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── hooks/
-│   │   ├── utils/
-│   │   ├── types/
-│   │   └── contexts/
-├── server/          # Node.js backend API
+│   │   ├── components/              # Reusable React components
+│   │   │   └── Navigation.tsx       # Main navigation component
+│   │   ├── pages/                   # Main application pages
+│   │   │   ├── Dashboard.tsx        # Main financial dashboard
+│   │   │   ├── Calendar.tsx         # Calendar with payment tracking
+│   │   │   └── SavingsSimulator.tsx # Savings growth calculator
+│   │   ├── utils/                   # Utility functions
+│   │   │   └── storage.ts          # Local storage management
+│   │   ├── App.tsx                  # Main application component
+│   │   ├── main.tsx                 # Application entry point
+│   │   └── index.css                # Global styles
+│   ├── public/                      # Static assets
+│   ├── index.html                   # HTML template
+│   ├── package.json                 # Frontend dependencies
+│   ├── tailwind.config.js           # Tailwind CSS configuration
+│   ├── tsconfig.json                # TypeScript configuration
+│   └── vite.config.ts               # Vite build configuration
+├── server/                          # Node.js backend API
 │   ├── src/
-│   │   ├── routes/
-│   │   ├── controllers/
-│   │   ├── middleware/
-│   │   ├── models/
-│   │   ├── utils/
-│   │   └── types/
-│   └── prisma/      # Database schema and migrations
+│   │   ├── controllers/             # Request handlers
+│   │   │   ├── creditCardController.ts
+│   │   │   ├── cryptoController.ts
+│   │   │   ├── dataController.ts
+│   │   │   ├── financialProfileController.ts
+│   │   │   └── userGoalsController.ts
+│   │   ├── routes/                  # API route definitions
+│   │   │   ├── creditCards.ts
+│   │   │   ├── crypto.ts
+│   │   │   ├── dashboard.ts
+│   │   │   ├── data.ts
+│   │   │   ├── debts.ts
+│   │   │   ├── financialProfile.ts
+│   │   │   ├── budgets.ts
+│   │   │   └── userGoals.ts
+│   │   ├── middleware/              # Express middleware
+│   │   │   ├── auth.ts              # Authentication middleware
+│   │   │   └── errorHandler.ts      # Error handling
+│   │   ├── services/                # Business logic layer
+│   │   │   └── financialProfileService.ts
+│   │   ├── utils/                   # Utility functions
+│   │   │   ├── database.ts          # Database connection
+│   │   │   └── financialCalculations.ts
+│   │   ├── index.ts                 # Server entry point
+│   │   └── types/                   # TypeScript type definitions
+│   ├── prisma/                      # Database ORM and migrations
+│   │   ├── schema.prisma            # Database schema
+│   │   ├── migrations/              # Database migrations
+│   │   └── dev.db                   # Development database
+│   ├── package.json                 # Backend dependencies
+│   └── tsconfig.json                # TypeScript configuration
+├── docs/                            # Documentation
+│   └── ai_agent_oneshot_prompt.md   # AI agent configuration
+├── package.json                     # Root package configuration
+├── README.md                        # Project documentation
+├── SECURITY.md                      # Security policy
+└── test-formatting.js               # Test formatting utility
 ```
 
 ## Recent Updates

@@ -1,7 +1,7 @@
 {
-  "name": "teamshell-finance-server",
+  "name": "cerebral-finance-server",
   "version": "1.0.0",
-  "description": "Backend API for TeamShell Finance App",
+  "description": "Backend API for Cerebral Finance Application",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {

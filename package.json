@@ -1,7 +1,7 @@
 {
-  "name": "teamshell-finance",
+  "name": "cerebral-finance",
   "version": "1.0.0",
-  "description": "Comprehensive financial management web application for individuals and couples",
+  "description": "Comprehensive financial management web application for personal finance tracking and analysis",
   "main": "server/index.js",
   "scripts": {
     "dev": "set NODE_OPTIONS=--no-deprecation && concurrently \"npm run server:dev\" \"npm run client:dev\"",
