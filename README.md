@@ -1,4 +1,4 @@
-# TeamShell Finance - Local Session-Only Version
+# Cerebral Finance - Local Session-Only Version
 
 A lightweight financial management web application designed for **LOCAL USE ONLY** with session-only storage. All data is wiped when the server restarts or when you click the "Wipe Data" button.
 
@@ -13,7 +13,10 @@ A lightweight financial management web application designed for **LOCAL USE ONLY
 ## Features
 
 - 💳 **Credit Card Management** - Add credit cards with name, limit, APR, and due dates
-- 📊 **Dashboard Overview** - View financial stats and credit card information
+- 🏠 **Loan Management** - Track loans with monthly payments and balances
+- 💰 **Expense Tracking** - Add and categorize monthly expenses with different frequencies
+- 📊 **Dashboard Overview** - View financial stats including total minimum payments
+- 📋 **Payment Breakdown** - Detailed breakdown showing credit cards, loans, and expenses
 - 🗑️ **Data Wipe** - Clear all session data with the red "Wipe Data" button
 
 ## Tech Stack
@@ -96,3 +99,28 @@ A lightweight financial management web application designed for **LOCAL USE ONLY
 │   │   └── types/
 │   └── prisma/      # Database schema and migrations
 ```
+
+## Recent Updates
+
+### Expense Integration (2024-09-19)
+- **Enhanced Monthly Minimums**: Expenses are now included in the total minimum payments calculation
+- **Payment Breakdown**: Added expenses section to the payment breakdown dropdown
+- **Dynamic Calculation**: Expenses with different frequencies (daily, weekly, monthly, yearly) are converted to monthly equivalents
+- **Conditional Rendering**: Expenses section only shows when expenses exist with amounts > 0
+- **Defensive Programming**: Added fallbacks for missing expense properties (id, name, frequency)
+
+#### Technical Implementation
+```javascript
+// Total minimum payments now includes expenses
+const totalMinimumPayments = totalCreditCardMinPayments + totalLoanPayments + totalMonthlyExpenses;
+
+// Payment breakdown follows same conditional pattern as loans/credit cards
+{expenses.length > 0 && totalMonthlyExpenses > 0 && (
+  <div>
+    {/* Expenses breakdown display */}
+  </div>
+)}
+```
+
+#### Files Modified
+- `client/src/pages/Dashboard.tsx` - Main dashboard component with expense integration

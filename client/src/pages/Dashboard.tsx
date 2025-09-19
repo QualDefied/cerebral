@@ -550,12 +550,10 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
   // Calculate total crypto value
   const totalCryptoValue = cryptoAssets.reduce((total, asset) => total + (asset.totalValue || 0), 0);
   
-  // Calculate total minimum payments (credit cards + loans)
+  // Calculate credit card and loan payments
   const totalCreditCardMinPayments = creditCards.reduce((total, card) => total + (card.calculatedMinimumPayment || 0), 0);
   const totalLoanPayments = loans.reduce((total, loan) => total + (loan.monthlyPayment || 0), 0);
-  const totalMinimumPayments = totalCreditCardMinPayments + totalLoanPayments;
-
-  // Calculate total expenses (separate from minimum payments)
+  // Calculate total expenses 
   const calculateMonthlyExpenseAmount = (expense: Expense): number => {
     switch (expense.frequency) {
       case 'daily': return expense.amount * 30;
@@ -569,6 +567,9 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
   const totalMonthlyExpenses = expenses.reduce((total, expense) => 
     total + calculateMonthlyExpenseAmount(expense), 0
   );
+
+  // Calculate total minimum payments (credit cards + loans + expenses)
+  const totalMinimumPayments = totalCreditCardMinPayments + totalLoanPayments + totalMonthlyExpenses;
 
   const [showBalanceForm, setShowBalanceForm] = useState(false);
   const [editingBalance, setEditingBalance] = useState('');
@@ -2010,7 +2011,7 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
               <p className={`text-xs mt-2 ${
                 totalMinimumPayments < 500 ? 'text-green-600' : totalMinimumPayments < 1000 ? 'text-yellow-600' : 'text-red-600'
               }`}>
-                Combined credit & loan payments
+                Combined credit, loan & expense payments
               </p>
             </div>
 
@@ -2089,11 +2090,44 @@ export default function Dashboard({ isDarkMode, toggleTheme, creditCards, setCre
                     </div>
                   )}
 
+                  {/* Monthly Expenses */}
+                  {expenses.length > 0 && totalMonthlyExpenses > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <TrendingDown className={`w-4 h-4 ${
+                          isDarkMode ? 'text-purple-300' : 'text-purple-600'
+                        }`} />
+                        <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Monthly Expenses
+                        </span>
+                        <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          ${totalMonthlyExpenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        {expenses
+                          .filter(expense => calculateMonthlyExpenseAmount(expense) > 0)
+                          .map((expense) => (
+                            <div key={expense.id || `expense-${expense.name}`} className={`flex items-center justify-between py-1 px-2 rounded ${
+                              isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50'
+                            }`}>
+                              <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                {expense.name || 'Unnamed Expense'} ({expense.frequency || 'monthly'})
+                              </span>
+                              <span className={`text-xs font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                ${calculateMonthlyExpenseAmount(expense).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* No Payments Message */}
                   {totalMinimumPayments === 0 && (
                     <div className={`text-center py-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       <p className="text-sm">No minimum payments due</p>
-                      <p className="text-xs mt-1">Add credit cards or loans to see payment breakdown</p>
+                      <p className="text-xs mt-1">Add credit cards, loans, or expenses to see payment breakdown</p>
                     </div>
                   )}
                 </div>
